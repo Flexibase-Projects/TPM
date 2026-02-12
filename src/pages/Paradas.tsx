@@ -14,7 +14,6 @@ import { getAllParadas, deleteParada } from '../services/paradaService'
 import { getMaquinarioById } from '../services/maquinarioService'
 import type { Parada } from '../types/parada'
 import type { Maquinario } from '../types/maquinario'
-import dayjs from 'dayjs'
 
 export const Paradas = () => {
   const [paradas, setParadas] = useState<Parada[]>([])

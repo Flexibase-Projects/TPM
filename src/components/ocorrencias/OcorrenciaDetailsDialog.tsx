@@ -7,10 +7,8 @@ import {
   Typography,
   Box,
   Chip,
-  Divider,
   Grid,
   Paper,
-  CircularProgress,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import type { OcorrenciaManutencao } from '../../types/ocorrencia'

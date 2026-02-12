@@ -73,7 +73,7 @@ export const getOrCreateTempoDisponivel = async (
   data: string
 ): Promise<TempoDisponivelDiario> => {
   // Tentar buscar registro existente
-  const { data: existing, error: fetchError } = await supabase
+  const { data: existing, error: _fetchError } = await supabase
     .from('TPM_tempo_disponivel_diario')
     .select('*')
     .eq('maquinario_id', maquinarioId)

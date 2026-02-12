@@ -4,8 +4,6 @@ import { getOcorrencias } from './ocorrenciaService'
 import { getAllParadas } from './paradaService'
 import type { Maquinario } from '../types/maquinario'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
-import type { Parada } from '../types/parada'
-
 export interface DashboardMetrics {
   totalMaquinarios: number
   maquinariosDisponiveis: number
@@ -170,8 +168,7 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
   
   paradas.forEach((parada) => {
     const maquinarioId = parada.maquinario_id
-    const maquinarioNome = parada.maquinario?.identificacao || maquinarioId
-    
+
     const atual = paradasPorMaquinario.get(maquinarioId) || {
       totalParadas: 0,
       horasParadas: 0,

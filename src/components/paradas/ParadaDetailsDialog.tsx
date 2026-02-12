@@ -7,7 +7,6 @@ import {
   Typography,
   Box,
   Chip,
-  Divider,
   Grid,
   Paper,
 } from '@mui/material'

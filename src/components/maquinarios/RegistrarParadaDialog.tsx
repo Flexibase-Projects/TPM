@@ -151,11 +151,11 @@ export const RegistrarParadaDialog = ({
       (!formData.horas_paradas || formData.horas_paradas === 0)
     ) {
       // Validar se é um horário válido antes de calcular
-      const [hours, minutes] = formData.hora_fim.split(':')
+      const [hours, minutes] = (formData.hora_fim ?? '').split(':')
       if (hours && minutes && !isNaN(parseInt(hours)) && !isNaN(parseInt(minutes))) {
         // Usar timeout para dar tempo do usuário terminar de digitar
         const timeoutId = setTimeout(() => {
-          const horas = calcularHorasParada(formData.hora_inicio, formData.hora_fim)
+          const horas = calcularHorasParada(formData.hora_inicio, formData.hora_fim ?? '')
           setFormData((prev) => {
             // Só atualizar se ainda não tem horas_paradas (evitar sobrescrever se usuário preencheu manualmente)
             if (!prev.horas_paradas || prev.horas_paradas === 0) {
@@ -474,7 +474,7 @@ export const RegistrarParadaDialog = ({
                 InputLabelProps={{
                   shrink: true,
                 }}
-                disabled={horasParadasPreenchido}
+                disabled={Boolean(horasParadasPreenchido)}
                 helperText={horasParadasPreenchido ? 'Calculado automaticamente' : 'As horas paradas serão calculadas automaticamente ao preencher'}
                 sx={{
                   '& .MuiOutlinedInput-root': {

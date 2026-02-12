@@ -9,7 +9,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider,
   List,
   ListItem,
   ListItemIcon,

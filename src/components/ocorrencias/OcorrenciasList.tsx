@@ -12,8 +12,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Box,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
@@ -89,19 +87,6 @@ export const OcorrenciasList = ({
   const shouldShowActions = (ocorrenciaId: string) => {
     const isMenuOpenForThisItem = open && selectedOcorrencia?.id === ocorrenciaId
     return hoveredRowId === ocorrenciaId || clickedRowId === ocorrenciaId || isMenuOpenForThisItem
-  }
-
-  const getCategoriaColor = (categoria: string) => {
-    switch (categoria) {
-      case 'Vermelho':
-        return '#d32f2f'
-      case 'Verde':
-        return '#2e7d32'
-      case 'Azul':
-        return '#1976d2'
-      default:
-        return '#757575'
-    }
   }
 
   const getStatusColor = (status: string) => {

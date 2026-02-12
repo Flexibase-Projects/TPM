@@ -17,7 +17,6 @@ import {
   TableHead,
   TableRow,
   useTheme,
-  Divider,
 } from '@mui/material'
 import {
   PrecisionManufacturing,
@@ -42,8 +41,6 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  LineChart,
-  Line,
   AreaChart,
   Area,
 } from 'recharts'
@@ -305,7 +302,7 @@ export const Dashboard = () => {
                           ? '0 4px 12px rgba(0, 0, 0, 0.4)' 
                           : '0 4px 12px rgba(0, 0, 0, 0.1)',
                       }}
-                      formatter={(value: number) => [value, 'Maquinários']}
+                      formatter={(value: number | undefined) => [value ?? 0, 'Maquinários']}
                     />
                     <Pie
                       data={[
@@ -888,7 +885,7 @@ export const Dashboard = () => {
                       border: `1px solid ${theme.palette.divider}`,
                       borderRadius: 8,
                     }}
-                    formatter={(value: number) => [formatarHoras(value), 'Horas']}
+                    formatter={(value: number | undefined) => [formatarHoras(value ?? 0), 'Horas']}
                   />
                   <Bar dataKey="horas" fill={theme.palette.primary.main} radius={[0, 4, 4, 0]} />
                 </BarChart>

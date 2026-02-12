@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
   Chip,
-  Divider,
   Grid,
   Paper,
   TextField,
@@ -18,10 +17,6 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
 } from '@mui/material'
 import WarningIcon from '@mui/icons-material/Warning'
 import CloseIcon from '@mui/icons-material/Close'
@@ -538,7 +533,7 @@ export const OcorrenciaManageDialog = ({
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                  <Typography variant="caption" sx={{ fontSize: '0.6875rem', color: 'text.secondary', fontWeight: ocorrencia.status === 'novo' ? 600 : 400 }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.6875rem', color: 'text.secondary', fontWeight: (ocorrencia.status as string) === 'novo' ? 600 : 400 }}>
                     NOVO
                   </Typography>
                   <Typography variant="caption" sx={{ fontSize: '0.6875rem', color: 'text.secondary', fontWeight: ocorrencia.status === 'na fila' ? 600 : 400 }}>
@@ -794,8 +789,7 @@ export const OcorrenciaManageDialog = ({
                       backgroundColor: 'grey.300',
                     }}
                   />
-                  {historico.map((item, index) => {
-                    const statusColor = getStatusColor(item.status_novo)
+                  {historico.map((item) => {
                     const statusColorMap: Record<string, string> = {
                       'novo': '#1976d2',
                       'na fila': '#ed6c02',
