@@ -27,7 +27,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import { useThemeMode } from '../../contexts/ThemeContext'
 import PersonIcon from '@mui/icons-material/Person'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import logoTpm from '../../../icons/LOGO TPM branco.png'
+import { GearLogo } from './GearLogo'
 
 export const drawerWidthExpanded = 240
 export const drawerWidthCollapsed = 64
@@ -73,22 +73,41 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           }}
         >
           <Box
-            component="img"
-            src={logoTpm}
-            alt="TPM Logo"
-            onClick={() => navigate('/')}
             sx={{
-              height: open ? 58 : 29,
-              width: 'auto',
-              filter: mode === 'dark' ? 'brightness(0) invert(1)' : 'brightness(0)',
-              objectFit: 'contain',
-              display: 'block',
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.8,
-              },
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.25,
+              minWidth: 0,
             }}
-          />
+          >
+            <IconButton
+              onClick={() => navigate('/')}
+              aria-label="Início"
+              sx={{
+                color: 'primary.main',
+                p: open ? 1.5 : 1,
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+            >
+              <GearLogo size={open ? 40 : 28} color="currentColor" />
+            </IconButton>
+            {open && (
+              <Typography
+                component="span"
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  color: 'text.primary',
+                  letterSpacing: '0.02em',
+                  fontSize: '0.95rem',
+                }}
+              >
+                TPM
+              </Typography>
+            )}
+          </Box>
           {open && (
             <IconButton 
               onClick={onToggle}
@@ -145,7 +164,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 : 'transparent',
               color: location.pathname === '/' 
                 ? 'primary.main'
-                : 'text.primary',
+                : 'text.secondary',
               '&:hover': {
                 '& > div': {
                   backgroundColor: !open ? '#e3f2fd' : undefined,
@@ -189,7 +208,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
-                  color: location.pathname === '/' ? 'primary.main' : 'text.primary',
+                  color: location.pathname === '/' ? 'primary.main' : 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -205,7 +224,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: location.pathname === '/' ? 'primary.main' : 'text.primary',
+                    color: location.pathname === '/' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
               />
@@ -228,7 +247,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 : 'transparent',
               color: location.pathname === '/minhas-oms' 
                 ? 'primary.main'
-                : 'text.primary',
+                : 'text.secondary',
               '&:hover': {
                 '& > div': {
                   backgroundColor: !open ? '#e3f2fd' : undefined,
@@ -272,7 +291,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
-                  color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.primary',
+                  color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -288,7 +307,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.primary',
+                    color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
               />
@@ -328,7 +347,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 : 'transparent',
               color: location.pathname === '/ocorrencias' 
                 ? 'primary.main'
-                : 'text.primary',
+                : 'text.secondary',
               '&:hover': {
                 '& > div': {
                   backgroundColor: !open ? '#e3f2fd' : undefined,
@@ -373,7 +392,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
-                  color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.primary',
+                  color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -390,7 +409,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                     '& .MuiListItemText-primary': { 
                       fontSize: '0.875rem', 
                       fontWeight: 500,
-                      color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.primary',
+                      color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.secondary',
                     } 
                   }} 
                 />
@@ -413,7 +432,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 : 'transparent',
               color: location.pathname === '/visualizar-om' 
                 ? 'primary.main'
-                : 'text.primary',
+                : 'text.secondary',
               '&:hover': {
                 '& > div': {
                   backgroundColor: !open ? '#e3f2fd' : undefined,
@@ -457,7 +476,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
-                  color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.primary',
+                  color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -472,7 +491,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 sx={{ 
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
-                    color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.primary',
+                    color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
               />
@@ -494,7 +513,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 : 'transparent',
               color: location.pathname === '/maquinarios' 
                 ? 'primary.main'
-                : 'text.primary',
+                : 'text.secondary',
               '&:hover': {
                 '& > div': {
                   backgroundColor: !open ? '#e3f2fd' : undefined,
@@ -538,7 +557,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
-                  color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.primary',
+                  color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -553,7 +572,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 sx={{ 
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
-                    color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.primary',
+                    color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
               />
@@ -575,7 +594,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 : 'transparent',
               color: location.pathname === '/paradas' 
                 ? 'primary.main'
-                : 'text.primary',
+                : 'text.secondary',
               '&:hover': {
                 '& > div': {
                   backgroundColor: !open ? '#e3f2fd' : undefined,
@@ -619,7 +638,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
-                  color: location.pathname === '/paradas' ? 'primary.main' : 'text.primary',
+                  color: location.pathname === '/paradas' ? 'primary.main' : 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -634,7 +653,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 sx={{ 
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
-                    color: location.pathname === '/paradas' ? 'primary.main' : 'text.primary',
+                    color: location.pathname === '/paradas' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
               />
@@ -663,6 +682,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               py: open ? 0 : 0.5,
               borderRadius: 2,
               fontSize: '0.875rem',
+              color: 'text.secondary',
               '&:hover': {
                 backgroundColor: 'action.hover',
               },
@@ -684,6 +704,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
+                  color: 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
                   },
@@ -693,13 +714,14 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               </ListItemIcon>
             </Box>
             {open && (
-              <ListItemText 
-                primary={mode === 'dark' ? 'Modo Claro' : 'Modo Escuro'} 
-                sx={{ 
-                  '& .MuiListItemText-primary': { 
+              <ListItemText
+                primary={mode === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                sx={{
+                  '& .MuiListItemText-primary': {
                     fontSize: '0.875rem',
-                  } 
-                }} 
+                    color: 'text.secondary',
+                  }
+                }}
               />
             )}
           </ListItemButton>
@@ -717,6 +739,11 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               py: open ? 0 : 0.5,
               borderRadius: 2,
               fontSize: '0.875rem',
+              color: 'text.secondary',
+              '&.Mui-disabled': {
+                color: 'text.secondary',
+                opacity: 1,
+              },
             }}
             disabled
           >
@@ -736,8 +763,13 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
+                  color: 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
+                  },
+                  '.MuiListItemButton-root.Mui-disabled &': {
+                    color: 'text.secondary',
+                    opacity: 1,
                   },
                 }}
               >
@@ -750,6 +782,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 sx={{ 
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
+                    color: 'text.secondary',
                   } 
                 }} 
               />
@@ -767,6 +800,11 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               py: open ? 0 : 0.5,
               borderRadius: 2,
               fontSize: '0.875rem',
+              color: 'text.secondary',
+              '&.Mui-disabled': {
+                color: 'text.secondary',
+                opacity: 1,
+              },
             }}
             disabled
           >
@@ -786,8 +824,13 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   minWidth: 0,
                   mr: open ? 2 : 0,
                   justifyContent: 'center',
+                  color: 'text.secondary',
                   '& svg': {
                     fontSize: '1.25rem',
+                  },
+                  '.MuiListItemButton-root.Mui-disabled &': {
+                    color: 'text.secondary',
+                    opacity: 1,
                   },
                 }}
               >
@@ -800,6 +843,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 sx={{ 
                   '& .MuiListItemText-primary': { 
                     fontSize: '0.875rem',
+                    color: 'text.secondary',
                   } 
                 }} 
               />

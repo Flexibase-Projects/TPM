@@ -115,7 +115,7 @@ export const MaquinariosFiltersComponent = ({
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <FormControl fullWidth size="small" error={!!areasError}>
+          <FormControl fullWidth size="small">
             <InputLabel id="filtro-area-label" shrink sx={{ fontSize: '0.8125rem' }}>
               Área
             </InputLabel>
