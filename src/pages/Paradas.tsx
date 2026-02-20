@@ -5,6 +5,7 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  TablePagination,
 } from '@mui/material'
 import { ParadasList } from '../components/paradas/ParadasList'
 import { ParadaDetailsDialog } from '../components/paradas/ParadaDetailsDialog'
@@ -12,6 +13,7 @@ import { RegistrarParadaDialog } from '../components/maquinarios/RegistrarParada
 import { ParadasFiltersComponent, type ParadasFilters } from '../components/paradas/ParadasFilters'
 import { getAllParadas, deleteParada } from '../services/paradaService'
 import { getMaquinarioById } from '../services/maquinarioService'
+import { ROWS_PER_PAGE } from '../utils/constants'
 import type { Parada } from '../types/parada'
 import type { Maquinario } from '../types/maquinario'
 
@@ -29,6 +31,7 @@ export const Paradas = () => {
     searchTerm: '',
     dataFiltro: null,
   })
+  const [page, setPage] = useState(0)
 
   const loadParadas = async () => {
     try {
@@ -127,6 +130,20 @@ export const Paradas = () => {
     })
   }, [paradas, filters])
 
+  const paginatedParadas = useMemo(() => {
+    const start = page * ROWS_PER_PAGE
+    return filteredParadas.slice(start, start + ROWS_PER_PAGE)
+  }, [filteredParadas, page])
+
+  useEffect(() => {
+    setPage(0)
+  }, [filters])
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredParadas.length / ROWS_PER_PAGE) - 1)
+    if (filteredParadas.length > 0 && page > maxPage) setPage(maxPage)
+  }, [filteredParadas.length, page])
+
   return (
     <Box sx={{ position: 'relative', minHeight: '100%' }}>
       <Box sx={{ mb: 2 }}>
@@ -158,10 +175,21 @@ export const Paradas = () => {
       ) : (
         <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <ParadasList
-            paradas={filteredParadas}
+            paradas={paginatedParadas}
             onRowClick={handleRowClick}
             onEdit={handleEdit}
             onDelete={handleDelete}
+          />
+          <TablePagination
+            component="div"
+            count={filteredParadas.length}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            rowsPerPage={ROWS_PER_PAGE}
+            rowsPerPageOptions={[ROWS_PER_PAGE]}
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            labelRowsPerPage="Itens por página:"
+            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
           />
         </Paper>
       )}

@@ -7,6 +7,7 @@ import {
   Alert,
   Fab,
   Tooltip,
+  TablePagination,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { MaquinariosList } from '../components/maquinarios/MaquinariosList'
@@ -16,6 +17,7 @@ import { RegistrarParadaDialog } from '../components/maquinarios/RegistrarParada
 import { MaquinariosFiltersComponent, type MaquinariosFilters } from '../components/maquinarios/MaquinariosFilters'
 import { getMaquinarios, deleteMaquinario, getMaquinarioById, getOcorrenciasAbertasByMaquinario } from '../services/maquinarioService'
 import { calcularStatusMaquinario } from '../utils/statusMaquinario'
+import { ROWS_PER_PAGE } from '../utils/constants'
 import type { Maquinario } from '../types/maquinario'
 
 export const Maquinarios = () => {
@@ -33,6 +35,7 @@ export const Maquinarios = () => {
     areaId: '',
     searchTerm: '',
   })
+  const [page, setPage] = useState(0)
 
   const loadMaquinarios = async () => {
     // #region agent log
@@ -45,50 +48,32 @@ export const Maquinarios = () => {
       fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:42',message:'calling getMaquinarios',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
       const data = await getMaquinarios()
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:45',message:'getMaquinarios result',data:{dataLength:data?.length||0,hasData:!!data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
-      // Buscar OMs abertas e calcular status para cada maquinário
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:48',message:'starting Promise.all for status calculation',data:{maquinariosCount:data?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      const maquinariosComStatus = await Promise.all(
-        data.map(async (maquinario, index) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:51',message:'processing maquinario',data:{index,maquinarioId:maquinario.id,identificacao:maquinario.identificacao},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
-          try {
-            // #region agent log
-            fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:54',message:'calling getOcorrenciasAbertasByMaquinario',data:{maquinarioId:maquinario.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
-            const ocorrenciasAbertas = await getOcorrenciasAbertasByMaquinario(maquinario.id)
-            // #region agent log
-            fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:57',message:'ocorrenciasAbertas result',data:{ocorrenciasCount:ocorrenciasAbertas?.length||0,maquinarioId:maquinario.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
-            // #region agent log
-            fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:59',message:'calling calcularStatusMaquinario',data:{maquinarioId:maquinario.id,statusManual:maquinario.status_maquinario},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            const statusCalculado = calcularStatusMaquinario(maquinario, ocorrenciasAbertas)
-            // #region agent log
-            fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:61',message:'statusCalculado result',data:{statusCalculado,maquinarioId:maquinario.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            return {
-              ...maquinario,
-              status_calculado: statusCalculado,
-            }
-          } catch (err) {
-            // #region agent log
-            fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:68',message:'error processing maquinario',data:{maquinarioId:maquinario.id,error:err instanceof Error?err.message:String(err)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
-            throw err
-          }
+
+      if (data.length === 0) {
+        console.warn(
+          '[Maquinários] getMaquinarios retornou 0 itens. Verifique RLS no Supabase (execute 012_enable_rls_maquinarios_read.sql) e se VITE_SUPABASE_URL aponta para o projeto correto.'
+        )
+        setError(
+          'Nenhum maquinário retornado pelo banco. Se você tem dados no Supabase: 1) Execute supabase/migrations/012_enable_rls_maquinarios_read.sql no SQL Editor do projeto; 2) Confirme que VITE_SUPABASE_URL no .env aponta para o mesmo projeto.'
+        )
+      }
+
+      // Buscar OMs abertas e calcular status por maquinário; falhas em um item não impedem a lista
+      const results = await Promise.allSettled(
+        data.map(async (maquinario) => {
+          const ocorrenciasAbertas = await getOcorrenciasAbertasByMaquinario(maquinario.id)
+          const statusCalculado = calcularStatusMaquinario(maquinario, ocorrenciasAbertas)
+          return { ...maquinario, status_calculado: statusCalculado }
         })
       )
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:73',message:'Promise.all completed',data:{maquinariosComStatusCount:maquinariosComStatus?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
+
+      const maquinariosComStatus = results.map((result, index) => {
+        if (result.status === 'fulfilled') return result.value
+        const maquinario = data[index]
+        const statusCalculado = calcularStatusMaquinario(maquinario, [])
+        return { ...maquinario, status_calculado: statusCalculado }
+      })
+
       setMaquinarios(maquinariosComStatus)
       // #region agent log
       fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:76',message:'setMaquinarios called',data:{count:maquinariosComStatus?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
@@ -143,12 +128,12 @@ export const Maquinarios = () => {
 
   const handleRowClick = async (maquinario: Maquinario) => {
     try {
-      // Carregar dados completos do maquinário
       const fullData = await getMaquinarioById(maquinario.id)
       setSelectedMaquinario(fullData)
       setDetailsOpen(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar detalhes do maquinário')
+    } catch {
+      setSelectedMaquinario(maquinario)
+      setDetailsOpen(true)
     }
   }
 
@@ -203,6 +188,20 @@ export const Maquinarios = () => {
     })
   }, [maquinarios, filters])
 
+  const paginatedMaquinarios = useMemo(() => {
+    const start = page * ROWS_PER_PAGE
+    return filteredMaquinarios.slice(start, start + ROWS_PER_PAGE)
+  }, [filteredMaquinarios, page])
+
+  useEffect(() => {
+    setPage(0)
+  }, [filters])
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredMaquinarios.length / ROWS_PER_PAGE) - 1)
+    if (filteredMaquinarios.length > 0 && page > maxPage) setPage(maxPage)
+  }, [filteredMaquinarios.length, page])
+
   return (
     <Box sx={{ position: 'relative', minHeight: '100%', pb: 10 }}>
       <Box sx={{ mb: 2 }}>
@@ -234,10 +233,21 @@ export const Maquinarios = () => {
       ) : (
         <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <MaquinariosList
-            maquinarios={filteredMaquinarios}
+            maquinarios={paginatedMaquinarios}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onRowClick={handleRowClick}
+          />
+          <TablePagination
+            component="div"
+            count={filteredMaquinarios.length}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            rowsPerPage={ROWS_PER_PAGE}
+            rowsPerPageOptions={[ROWS_PER_PAGE]}
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            labelRowsPerPage="Itens por página:"
+            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
           />
         </Paper>
       )}

@@ -5,11 +5,13 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  TablePagination,
 } from '@mui/material'
 import { OcorrenciasList } from '../components/ocorrencias/OcorrenciasList'
 import { OcorrenciaManageDialog } from '../components/ocorrencias/OcorrenciaManageDialog'
 import { OcorrenciasFiltersComponent, type OcorrenciasFilters } from '../components/ocorrencias/OcorrenciasFilters'
 import { getOcorrencias, deleteOcorrencia, calcularTempos } from '../services/ocorrenciaService'
+import { ROWS_PER_PAGE } from '../utils/constants'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
 
 // TODO: Substituir por sistema de autenticação real
@@ -32,6 +34,7 @@ export const MinhasOMs = () => {
     areaId: '',
     searchTerm: '',
   })
+  const [page, setPage] = useState(0)
   const currentUser = getCurrentUser()
 
   const loadOcorrencias = async () => {
@@ -121,6 +124,20 @@ export const MinhasOMs = () => {
     })
   }, [ocorrencias, filters])
 
+  const paginatedOcorrencias = useMemo(() => {
+    const start = page * ROWS_PER_PAGE
+    return filteredOcorrencias.slice(start, start + ROWS_PER_PAGE)
+  }, [filteredOcorrencias, page])
+
+  useEffect(() => {
+    setPage(0)
+  }, [filters])
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredOcorrencias.length / ROWS_PER_PAGE) - 1)
+    if (filteredOcorrencias.length > 0 && page > maxPage) setPage(maxPage)
+  }, [filteredOcorrencias.length, page])
+
   const handleRowClick = (ocorrencia: OcorrenciaManutencao) => {
     setSelectedOcorrencia(ocorrencia)
     setManageOpen(true)
@@ -200,12 +217,23 @@ export const MinhasOMs = () => {
         />
       </Paper>
 
-      <Paper sx={{ p: 2 }}>
+      <Paper sx={{ p: 2, overflow: 'hidden' }}>
         <OcorrenciasList
-          ocorrencias={filteredOcorrencias}
+          ocorrencias={paginatedOcorrencias}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onRowClick={handleRowClick}
+        />
+        <TablePagination
+          component="div"
+          count={filteredOcorrencias.length}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={ROWS_PER_PAGE}
+          rowsPerPageOptions={[ROWS_PER_PAGE]}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+          labelRowsPerPage="Itens por página:"
+          sx={{ borderTop: '1px solid', borderColor: 'divider' }}
         />
       </Paper>
 

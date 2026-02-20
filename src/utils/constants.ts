@@ -2,6 +2,9 @@
 
 export const APP_NAME = 'TPM - Controle de Maquinário'
 
+/** Quantidade de itens por página nas listagens (Maquinários, Paradas, OMs, etc.) */
+export const ROWS_PER_PAGE = 10
+
 // Prefixo para todas as tabelas do banco de dados
 export const TABLE_PREFIX = 'TPM_'
 
