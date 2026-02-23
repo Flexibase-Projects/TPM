@@ -37,12 +37,15 @@ export const getMaquinarios = async (): Promise<Maquinario[]> => {
     .order('identificacao')
 
   if (error) throw error
-  
-  // Transformar os dados para o formato esperado
-  return (data || []).map((item: any) => ({
+
+  // Transformar os dados para o formato esperado (preservar imagem_url para exibição na lista)
+  const mapped = (data || []).map((item: any) => ({
     ...item,
     area: Array.isArray(item.area) ? item.area[0] : item.area,
+    imagem_url: item.imagem_url ?? null,
   })) as Maquinario[]
+
+  return mapped
 }
 
 export const getMaquinarioById = async (id: string): Promise<Maquinario> => {
@@ -125,8 +128,8 @@ export const updateMaquinario = async (
   id: string,
   formData: MaquinarioFormData
 ): Promise<Maquinario> => {
-  // Atualizar maquinário
-  const { error: maqError } = await supabase
+  // Atualizar maquinário e obter linha retornada para validar persistência (ex.: imagem_url)
+  const { data: updatedRow, error: maqError } = await supabase
     .from('TPM_maquinarios')
     .update({
       identificacao: formData.identificacao,
@@ -139,8 +142,18 @@ export const updateMaquinario = async (
       imagem_url: formData.imagem_url ?? null,
     })
     .eq('id', id)
+    .select()
+    .single()
 
   if (maqError) throw maqError
+
+  const expectedImagemUrl = formData.imagem_url != null && formData.imagem_url.trim() !== ''
+  const actualImagemUrl = updatedRow?.imagem_url != null && String(updatedRow.imagem_url).trim() !== ''
+  if (expectedImagemUrl && !actualImagemUrl) {
+    throw new Error(
+      'Não foi possível gravar a URL da imagem. Verifique as permissões RLS da tabela TPM_maquinarios (INSERT/UPDATE).'
+    )
+  }
 
   // Remover motivos de parada existentes
   await supabase.from('TPM_motivos_parada').delete().eq('maquinario_id', id)
@@ -181,24 +194,63 @@ export const updateMaquinario = async (
   return getMaquinarioById(id)
 }
 
-const BUCKET_MAQUINARIOS_IMAGENS = 'maquinarios-imagens'
+const BUCKET_MAQUINARIOS_IMAGENS = 'maquinarios'
+
+/**
+ * Imagens de maquinários:
+ * - Toda imagem de maquinário é enviada apenas por este módulo (via uploadImagemMaquinario).
+ * - O arquivo vai para o bucket "maquinarios" e a URL é sempre persistida em TPM_maquinarios.imagem_url.
+ * - A listagem de maquinários usa essa coluna para exibir a imagem; o único fluxo de upload é o formulário de criar/editar maquinário.
+ */
+
+/**
+ * Retorna a URL pública para exibição da imagem.
+ * Se imagem_url já for uma URL completa (http/https), retorna como está.
+ * Se for um path do Storage (ex: "uuid/foto.jpg"), monta a URL pública.
+ */
+export const getImagemDisplayUrl = (imagemUrl: string | null | undefined): string | null => {
+  if (!imagemUrl || typeof imagemUrl !== 'string' || !imagemUrl.trim()) return null
+  const trimmed = imagemUrl.trim()
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+  const { data } = supabase.storage.from(BUCKET_MAQUINARIOS_IMAGENS).getPublicUrl(trimmed)
+  return data?.publicUrl ?? trimmed
+}
+
+/** Extensão permitida a partir do tipo do arquivo (um arquivo por maquinário, path fixo). */
+const getExt = (file: File): string => {
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (ext && ['jpeg', 'jpg', 'png', 'webp'].includes(ext)) return ext
+  if (file.type === 'image/png') return 'png'
+  if (file.type === 'image/webp') return 'webp'
+  return 'jpg'
+}
 
 /**
  * Faz upload da imagem do maquinário para o Storage e retorna a URL pública.
- * Caminho no bucket: {maquinarioId}/{timestamp}.{ext}
+ * A imagem fica sempre vinculada ao maquinário: path {maquinarioId}/foto.{ext} no bucket "maquinarios"
+ * e a URL deve ser gravada em TPM_maquinarios.imagem_url para exibição na tabela de maquinários (upsert substitui).
  */
 export const uploadImagemMaquinario = async (
   maquinarioId: string,
   file: File
 ): Promise<string> => {
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const path = `${maquinarioId}/${Date.now()}.${ext}`
+  const ext = getExt(file)
+  const path = `${maquinarioId}/foto.${ext}`
 
   const { error } = await supabase.storage
     .from(BUCKET_MAQUINARIOS_IMAGENS)
     .upload(path, file, { upsert: true })
 
-  if (error) throw error
+  if (error) {
+    const isBucketNotFound =
+      error.message?.toLowerCase().includes('bucket') && error.message?.toLowerCase().includes('not found')
+    if (isBucketNotFound) {
+      throw new Error(
+        'Bucket de imagens não configurado. Use o bucket "maquinarios" no Supabase (Storage) e marque como público. Veja supabase/migrations/LEIA-ME_013_bucket_maquinarios_imagens.md'
+      )
+    }
+    throw error
+  }
 
   const { data } = supabase.storage.from(BUCKET_MAQUINARIOS_IMAGENS).getPublicUrl(path)
   return data.publicUrl

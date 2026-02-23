@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Table,
   TableBody,
@@ -26,6 +26,7 @@ import BlockIcon from '@mui/icons-material/Block'
 import ImageIcon from '@mui/icons-material/Image'
 import type { Maquinario, StatusMaquinarioCalculado } from '../../types/maquinario'
 import { formatarHorasParaHHMM } from '../../utils/constants'
+import { getImagemDisplayUrl } from '../../services/maquinarioService'
 
 interface MaquinariosListProps {
   maquinarios: Maquinario[]
@@ -40,14 +41,20 @@ export const MaquinariosList = ({
   onDelete,
   onRowClick,
 }: MaquinariosListProps) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MaquinariosList.tsx:36',message:'MaquinariosList render',data:{maquinariosCount:maquinarios?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedMaquinario, setSelectedMaquinario] = useState<Maquinario | null>(null)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
   const [clickedRowId, setClickedRowId] = useState<string | null>(null)
+  const [imagemLoadErrors, setImagemLoadErrors] = useState<Set<string>>(new Set())
   const open = Boolean(anchorEl)
+
+  const handleImagemError = (maquinarioId: string) => {
+    setImagemLoadErrors((prev) => new Set(prev).add(maquinarioId))
+  }
+
+  useEffect(() => {
+    setImagemLoadErrors(new Set())
+  }, [maquinarios])
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, maquinario: Maquinario) => {
     setAnchorEl(event.currentTarget)
@@ -207,34 +214,55 @@ export const MaquinariosList = ({
                 </Tooltip>
               </TableCell>
               <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
-                {maquinario.imagem_url ? (
-                  <Box
-                    component="img"
-                    src={maquinario.imagem_url}
-                    alt=""
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      objectFit: 'cover',
-                      borderRadius: 1,
-                      display: 'block',
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 1,
-                      bgcolor: 'action.hover',
-                    }}
-                  >
-                    <ImageIcon sx={{ fontSize: '1.25rem', color: 'text.secondary' }} />
-                  </Box>
-                )}
+                {(() => {
+                  const displayUrl = getImagemDisplayUrl(maquinario.imagem_url)
+                  const showPlaceholder = !displayUrl || imagemLoadErrors.has(maquinario.id)
+                  if (showPlaceholder) {
+                    const placeholderBox = (
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 1,
+                          bgcolor: 'action.hover',
+                        }}
+                      >
+                        <ImageIcon sx={{ fontSize: '1.25rem', color: 'text.secondary' }} />
+                      </Box>
+                    )
+                    const failedLoadTooltip = maquinario.imagem_url
+                      ? 'Imagem não carregada. Verifique se o bucket "maquinarios" está público no Supabase (Storage).'
+                      : undefined
+                    return failedLoadTooltip ? (
+                      <Tooltip title={failedLoadTooltip} arrow>
+                        {placeholderBox}
+                      </Tooltip>
+                    ) : (
+                      placeholderBox
+                    )
+                  }
+                  return (
+                    <Box
+                      component="img"
+                      src={displayUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onError={() => handleImagemError(maquinario.id)}
+                      key={`${maquinario.id}-${displayUrl}`}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        display: 'block',
+                      }}
+                    />
+                  )
+                })()}
               </TableCell>
               <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
                 {maquinario.identificacao}

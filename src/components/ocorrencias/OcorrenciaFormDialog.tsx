@@ -147,10 +147,23 @@ export const OcorrenciaFormDialog = ({
     // #region agent log
     fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:91',message:'handleSubmit called',data:{formData,isEdit:!!ocorrencia},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
     // #endregion
+    setError(null)
+
+    const isCorretiva = (ocorrencia?.tipo_om ?? tipoOM) === 'Corretiva'
+    if (isCorretiva) {
+      if (!formData.maquinario_id?.trim()) {
+        setError('Selecione o maquinário.')
+        return
+      }
+      if (!formData.descricao?.trim()) {
+        setError('Preencha a descrição do problema.')
+        return
+      }
+    }
+
     try {
       setLoading(true)
-      setError(null)
-      
+
       const submitData = {
         ...formData,
         data_ocorrencia: dataOcorrencia ? dataOcorrencia.toISOString() : new Date().toISOString(),
@@ -173,10 +186,13 @@ export const OcorrenciaFormDialog = ({
       fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:111',message:'Error saving ocorrencia',data:{error:error instanceof Error?error.message:String(error),errorStack:error instanceof Error?error.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
       // #endregion
       console.error('Erro ao salvar ocorrência:', error)
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Erro ao salvar ocorrência. Verifique os dados e tente novamente.'
-      setError(errorMessage)
+      const err = error as { message?: string; code?: string; details?: string }
+      const errorMessage =
+        (err?.message && String(err.message).trim()) ||
+        (error instanceof Error ? error.message : '') ||
+        'Erro ao salvar ocorrência. Verifique os dados e tente novamente.'
+      const detail = [err?.code, err?.details].filter(Boolean).join(' — ')
+      setError(detail ? `${errorMessage} (${detail})` : errorMessage)
     } finally {
       setLoading(false)
     }

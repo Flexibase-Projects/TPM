@@ -82,7 +82,12 @@ export const Maquinarios = () => {
       // #region agent log
       fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:78',message:'loadMaquinarios error',data:{error:err instanceof Error?err.message:String(err),stack:err instanceof Error?err.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
-      setError(err instanceof Error ? err.message : 'Erro ao carregar maquinários')
+      const msg = err instanceof Error ? err.message : 'Erro ao carregar maquinários'
+      setError(
+        msg === 'Failed to fetch'
+          ? 'Não foi possível conectar ao Supabase. Verifique se o servidor está rodando e se VITE_SUPABASE_URL no .env está correto e acessível.'
+          : msg
+      )
     } finally {
       setLoading(false)
       // #region agent log
@@ -100,9 +105,18 @@ export const Maquinarios = () => {
     setFormOpen(true)
   }
 
-  const handleEdit = (maquinario: Maquinario) => {
-    setEditingMaquinario(maquinario)
+  const handleEdit = async (maquinario: Maquinario) => {
     setFormOpen(true)
+    try {
+      const fullData = await getMaquinarioById(maquinario.id)
+      setEditingMaquinario(fullData)
+    } catch (err) {
+      setEditingMaquinario(maquinario)
+      const msg = err instanceof Error ? err.message : ''
+      if (msg === 'Failed to fetch') {
+        setError('Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL e se o servidor está acessível.')
+      }
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -112,7 +126,8 @@ export const Maquinarios = () => {
       await deleteMaquinario(id)
       await loadMaquinarios()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir maquinário')
+      const msg = err instanceof Error ? err.message : 'Erro ao excluir maquinário'
+      setError(msg === 'Failed to fetch' ? 'Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL e se o servidor está acessível.' : msg)
     }
   }
 

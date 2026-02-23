@@ -97,6 +97,27 @@ http://<SEU_IP>:3000
 
 Ex.: `http://192.168.0.54:3000`
 
+## Troubleshooting: "Sem conexão com o Supabase"
+
+Se aparecer a mensagem **"Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL no .env e se o servidor está acessível"**, confira:
+
+1. **Arquivo de ambiente**  
+   Existe um arquivo `.env` ou `.env.local` na **raiz do projeto** (mesmo nível que `package.json`) com:
+   - `VITE_SUPABASE_URL=https://xxxxx.supabase.co` (substitua pelo seu projeto)
+   - `VITE_SUPABASE_ANON_KEY=eyJ...` (chave anônima do projeto)
+
+2. **Onde pegar URL e chave**  
+   No [Supabase Dashboard](https://supabase.com/dashboard): selecione o projeto → **Project Settings** → **API** → use **Project URL** e **anon public** key.
+
+3. **Reiniciar o servidor**  
+   O Vite lê o `.env` só ao subir. Depois de criar ou alterar o `.env`, pare o `npm run dev` (Ctrl+C) e rode de novo.
+
+4. **Projeto Supabase ativo**  
+   Projetos gratuitos pausam após inatividade. No Dashboard, se o projeto estiver pausado, clique em **Restore project**.
+
+5. **Rede e firewall**  
+   Confirme que o navegador consegue acessar a URL do Supabase (ex.: abra `https://seu-projeto.supabase.co` em outra aba e veja se carrega).
+
 ## Licença
 
 Projeto privado.

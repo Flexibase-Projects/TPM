@@ -22,7 +22,7 @@ import {
 import { AreasManager } from './AreasManager'
 import { MotivosParadaManager } from './MotivosParadaManager'
 import { ChecklistManager } from './ChecklistManager'
-import { createMaquinario, updateMaquinario, getAreas, uploadImagemMaquinario } from '../../services/maquinarioService'
+import { createMaquinario, updateMaquinario, getAreas, uploadImagemMaquinario, getImagemDisplayUrl } from '../../services/maquinarioService'
 import type { Maquinario, MaquinarioFormData, Area, StatusMaquinario } from '../../types/maquinario'
 
 const MAX_IMAGE_SIZE_MB = 5
@@ -31,7 +31,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 interface MaquinarioFormDialogProps {
   open: boolean
   onClose: () => void
-  onSubmit: () => void
+  onSubmit: () => void | Promise<void>
   maquinario?: Maquinario | null
 }
 
@@ -99,6 +99,12 @@ export const MaquinarioFormDialog = ({
     }
   }, [open, maquinario])
 
+  useEffect(() => {
+    return () => {
+      if (imagemPreviewUrl) URL.revokeObjectURL(imagemPreviewUrl)
+    }
+  }, [imagemPreviewUrl])
+
   const loadAreas = async () => {
     try {
       const data = await getAreas()
@@ -142,6 +148,7 @@ export const MaquinarioFormDialog = ({
     try {
       setLoading(true)
       setError(null)
+      // Imagem selecionada é sempre direcionada ao bucket de maquinários e à coluna imagem_url da tabela de maquinários, para aparecer na listagem ao acessar.
       if (maquinario) {
         let payload: MaquinarioFormData = { ...formData }
         if (imagemFile) {
@@ -156,12 +163,14 @@ export const MaquinarioFormDialog = ({
           await updateMaquinario(created.id, { ...formData, imagem_url: url })
         }
       }
-      onSubmit()
+      await onSubmit()
     } catch (error) {
       console.error('Erro ao salvar maquinário:', error)
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Erro ao salvar maquinário. Verifique os dados e tente novamente.'
+      const rawMessage = error instanceof Error ? error.message : 'Erro ao salvar maquinário. Verifique os dados e tente novamente.'
+      const errorMessage =
+        rawMessage === 'Failed to fetch'
+          ? 'Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL no .env e se o servidor está acessível.'
+          : rawMessage
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -447,21 +456,24 @@ export const MaquinarioFormDialog = ({
                 </Typography>
                 <Grid container spacing={2} alignItems="center">
                   <Grid item>
-                    {(imagemPreviewUrl || formData.imagem_url) ? (
-                      <Box
-                        component="img"
-                        src={imagemPreviewUrl || formData.imagem_url || ''}
-                        alt="Preview"
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          objectFit: 'cover',
-                          borderRadius: 1,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      />
-                    ) : (
+                    {(() => {
+                      const previewSrc = imagemPreviewUrl || getImagemDisplayUrl(formData.imagem_url) || ''
+                      return previewSrc ? (
+                        <Box
+                          component="img"
+                          src={previewSrc}
+                          alt="Preview"
+                          key={imagemPreviewUrl ? 'file-preview' : (formData.imagem_url || '')}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        />
+                      ) : (
                       <Box
                         sx={{
                           width: 80,
@@ -480,19 +492,21 @@ export const MaquinarioFormDialog = ({
                       >
                         Nenhuma imagem
                       </Box>
-                    )}
+                      )
+                    })()}
                   </Grid>
                   <Grid item xs={12} sm="auto">
                     <Button variant="outlined" component="label" size="medium" disabled={loading}>
-                      {imagemPreviewUrl || formData.imagem_url ? 'Trocar imagem' : 'Selecionar imagem'}
+                      {(imagemPreviewUrl || getImagemDisplayUrl(formData.imagem_url)) ? 'Trocar imagem' : 'Selecionar imagem'}
                       <input
+                        key={`imagem-${open ? maquinario?.id ?? 'new' : 'closed'}`}
                         type="file"
                         hidden
                         accept="image/jpeg,image/png,image/webp"
                         onChange={handleImagemChange}
                       />
                     </Button>
-                    {(imagemPreviewUrl || formData.imagem_url) && (
+                    {(imagemPreviewUrl || getImagemDisplayUrl(formData.imagem_url)) && (
                       <Button
                         variant="text"
                         color="error"
