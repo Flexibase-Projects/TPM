@@ -22,8 +22,11 @@ import {
 import { AreasManager } from './AreasManager'
 import { MotivosParadaManager } from './MotivosParadaManager'
 import { ChecklistManager } from './ChecklistManager'
-import { createMaquinario, updateMaquinario, getAreas } from '../../services/maquinarioService'
+import { createMaquinario, updateMaquinario, getAreas, uploadImagemMaquinario } from '../../services/maquinarioService'
 import type { Maquinario, MaquinarioFormData, Area, StatusMaquinario } from '../../types/maquinario'
+
+const MAX_IMAGE_SIZE_MB = 5
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 interface MaquinarioFormDialogProps {
   open: boolean
@@ -49,14 +52,19 @@ export const MaquinarioFormDialog = ({
     tempo_disponivel_horas: 9,
     status_maquinario: 'Disponivel',
     motivo_inativacao: null,
+    imagem_url: null,
     motivos_parada: [],
     checklist_itens: [],
   })
+  const [imagemFile, setImagemFile] = useState<File | null>(null)
+  const [imagemPreviewUrl, setImagemPreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
       setError(null)
       loadAreas()
+      setImagemFile(null)
+      setImagemPreviewUrl(null)
       if (maquinario) {
         setFormData({
           identificacao: maquinario.identificacao,
@@ -66,6 +74,7 @@ export const MaquinarioFormDialog = ({
           tempo_disponivel_horas: maquinario.tempo_disponivel_horas,
           status_maquinario: maquinario.status_maquinario || 'Disponivel',
           motivo_inativacao: maquinario.motivo_inativacao || null,
+          imagem_url: maquinario.imagem_url ?? null,
           motivos_parada: maquinario.motivos_parada?.map(m => m.descricao) || [],
           checklist_itens: maquinario.checklist_itens?.map(item => ({
             descricao: item.descricao,
@@ -82,6 +91,7 @@ export const MaquinarioFormDialog = ({
           tempo_disponivel_horas: 9,
           status_maquinario: 'Disponivel',
           motivo_inativacao: null,
+          imagem_url: null,
           motivos_parada: [],
           checklist_itens: [],
         })
@@ -98,6 +108,30 @@ export const MaquinarioFormDialog = ({
     }
   }
 
+  const handleImagemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setError('Formato inválido. Use JPEG, PNG ou WebP.')
+      return
+    }
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      setError(`Imagem deve ter no máximo ${MAX_IMAGE_SIZE_MB} MB.`)
+      return
+    }
+    setError(null)
+    if (imagemPreviewUrl) URL.revokeObjectURL(imagemPreviewUrl)
+    setImagemPreviewUrl(URL.createObjectURL(file))
+    setImagemFile(file)
+  }
+
+  const handleRemoverImagem = () => {
+    if (imagemPreviewUrl) URL.revokeObjectURL(imagemPreviewUrl)
+    setImagemPreviewUrl(null)
+    setImagemFile(null)
+    setFormData((prev) => ({ ...prev, imagem_url: null }))
+  }
+
   const handleSubmit = async () => {
     // Validação: motivo obrigatório para Inativa
     if (formData.status_maquinario === 'Inativa' && (!formData.motivo_inativacao || formData.motivo_inativacao.trim() === '')) {
@@ -109,9 +143,18 @@ export const MaquinarioFormDialog = ({
       setLoading(true)
       setError(null)
       if (maquinario) {
-        await updateMaquinario(maquinario.id, formData)
+        let payload: MaquinarioFormData = { ...formData }
+        if (imagemFile) {
+          const url = await uploadImagemMaquinario(maquinario.id, imagemFile)
+          payload = { ...formData, imagem_url: url }
+        }
+        await updateMaquinario(maquinario.id, payload)
       } else {
-        await createMaquinario(formData)
+        const created = await createMaquinario({ ...formData, imagem_url: imagemFile ? null : formData.imagem_url ?? null })
+        if (imagemFile) {
+          const url = await uploadImagemMaquinario(created.id, imagemFile)
+          await updateMaquinario(created.id, { ...formData, imagem_url: url })
+        }
       }
       onSubmit()
     } catch (error) {
@@ -393,6 +436,79 @@ export const MaquinarioFormDialog = ({
                     obrigatório para documentação.
                   </Alert>
                 )}
+              </Paper>
+            </Grid>
+
+            {/* Seção: Imagem do maquinário */}
+            <Grid item xs={12}>
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+                  Imagem do Maquinário
+                </Typography>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item>
+                    {(imagemPreviewUrl || formData.imagem_url) ? (
+                      <Box
+                        component="img"
+                        src={imagemPreviewUrl || formData.imagem_url || ''}
+                        alt="Preview"
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          objectFit: 'cover',
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 1,
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          color: 'text.secondary',
+                          fontSize: '0.75rem',
+                          textAlign: 'center',
+                          px: 1,
+                        }}
+                      >
+                        Nenhuma imagem
+                      </Box>
+                    )}
+                  </Grid>
+                  <Grid item xs={12} sm="auto">
+                    <Button variant="outlined" component="label" size="medium" disabled={loading}>
+                      {imagemPreviewUrl || formData.imagem_url ? 'Trocar imagem' : 'Selecionar imagem'}
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImagemChange}
+                      />
+                    </Button>
+                    {(imagemPreviewUrl || formData.imagem_url) && (
+                      <Button
+                        variant="text"
+                        color="error"
+                        size="medium"
+                        onClick={handleRemoverImagem}
+                        disabled={loading}
+                        sx={{ ml: 1 }}
+                      >
+                        Remover
+                      </Button>
+                    )}
+                  </Grid>
+                </Grid>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  JPEG, PNG ou WebP. Máximo {MAX_IMAGE_SIZE_MB} MB.
+                </Typography>
               </Paper>
             </Grid>
 

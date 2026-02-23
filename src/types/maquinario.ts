@@ -38,6 +38,7 @@ export interface Maquinario {
   tempo_disponivel_horas: number
   status_maquinario?: StatusMaquinario
   motivo_inativacao?: string | null
+  imagem_url?: string | null
   created_at: string
   updated_at: string
   // Relacionamentos (populados via join)
@@ -56,6 +57,7 @@ export interface MaquinarioFormData {
   tempo_disponivel_horas: number
   status_maquinario?: StatusMaquinario
   motivo_inativacao?: string | null
+  imagem_url?: string | null
   motivos_parada: string[]
   checklist_itens: Omit<ChecklistItem, 'id' | 'maquinario_id' | 'created_at' | 'updated_at'>[]
 }

@@ -23,6 +23,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
 import ErrorIcon from '@mui/icons-material/Error'
 import BlockIcon from '@mui/icons-material/Block'
+import ImageIcon from '@mui/icons-material/Image'
 import type { Maquinario, StatusMaquinarioCalculado } from '../../types/maquinario'
 import { formatarHorasParaHHMM } from '../../utils/constants'
 
@@ -132,7 +133,7 @@ export const MaquinariosList = ({
         <Table>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={7} align="center" sx={{ py: 4, fontSize: '0.8125rem', color: 'text.secondary' }}>
+              <TableCell colSpan={8} align="center" sx={{ py: 4, fontSize: '0.8125rem', color: 'text.secondary' }}>
                 Nenhum maquinário cadastrado
               </TableCell>
             </TableRow>
@@ -149,6 +150,9 @@ export const MaquinariosList = ({
           <TableRow>
             <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
               Status
+            </TableCell>
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
+              Imagem
             </TableCell>
             <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
               Identificação
@@ -201,6 +205,36 @@ export const MaquinariosList = ({
                     </Typography>
                   </Box>
                 </Tooltip>
+              </TableCell>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
+                {maquinario.imagem_url ? (
+                  <Box
+                    component="img"
+                    src={maquinario.imagem_url}
+                    alt=""
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                    }}
+                  >
+                    <ImageIcon sx={{ fontSize: '1.25rem', color: 'text.secondary' }} />
+                  </Box>
+                )}
               </TableCell>
               <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
                 {maquinario.identificacao}

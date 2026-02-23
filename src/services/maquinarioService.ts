@@ -80,6 +80,7 @@ export const createMaquinario = async (formData: MaquinarioFormData): Promise<Ma
       tempo_disponivel_horas: formData.tempo_disponivel_horas,
       status_maquinario: formData.status_maquinario || 'Disponivel',
       motivo_inativacao: formData.motivo_inativacao || null,
+      imagem_url: formData.imagem_url ?? null,
     })
     .select()
     .single()
@@ -135,6 +136,7 @@ export const updateMaquinario = async (
       tempo_disponivel_horas: formData.tempo_disponivel_horas,
       status_maquinario: formData.status_maquinario || 'Disponivel',
       motivo_inativacao: formData.motivo_inativacao || null,
+      imagem_url: formData.imagem_url ?? null,
     })
     .eq('id', id)
 
@@ -177,6 +179,29 @@ export const updateMaquinario = async (
   }
 
   return getMaquinarioById(id)
+}
+
+const BUCKET_MAQUINARIOS_IMAGENS = 'maquinarios-imagens'
+
+/**
+ * Faz upload da imagem do maquinário para o Storage e retorna a URL pública.
+ * Caminho no bucket: {maquinarioId}/{timestamp}.{ext}
+ */
+export const uploadImagemMaquinario = async (
+  maquinarioId: string,
+  file: File
+): Promise<string> => {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${maquinarioId}/${Date.now()}.${ext}`
+
+  const { error } = await supabase.storage
+    .from(BUCKET_MAQUINARIOS_IMAGENS)
+    .upload(path, file, { upsert: true })
+
+  if (error) throw error
+
+  const { data } = supabase.storage.from(BUCKET_MAQUINARIOS_IMAGENS).getPublicUrl(path)
+  return data.publicUrl
 }
 
 export const deleteMaquinario = async (id: string): Promise<void> => {
