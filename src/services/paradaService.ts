@@ -217,6 +217,37 @@ export const createParadaManual = async (
 }
 
 /**
+ * Cria uma parada automática quando o maquinário é desativado.
+ * Usado para que a desativação apareça na tela Paradas sem registro manual.
+ */
+export const createParadaAutomaticaDesativacao = async (
+  maquinarioId: string
+): Promise<Parada | null> => {
+  const dataHoje = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+  const { data, error } = await supabase
+    .from('TPM_paradas')
+    .insert({
+      maquinario_id: maquinarioId,
+      ocorrencia_id: null,
+      data_parada: dataHoje,
+      hora_inicio: '08:00:00',
+      hora_fim: '08:00:00',
+      horas_paradas: 0,
+      motivo_parada_id: null,
+      observacoes: 'Desativação de máquina',
+      tipo_registro: 'Automatico',
+    })
+    .select(`*, motivo_parada:TPM_motivos_parada(id, descricao)`)
+    .single()
+
+  if (error) {
+    console.error('Erro ao criar parada automática por desativação:', error)
+    return null
+  }
+  return data as Parada
+}
+
+/**
  * Busca paradas de um maquinário
  */
 export const getParadasByMaquinario = async (
@@ -372,7 +403,8 @@ export const getAllParadas = async (): Promise<Parada[]> => {
 
   if (error) throw error
 
-  // Transformar os dados para o formato esperado
+  // Transformar os dados para o formato esperado. maquinario/area podem ser null
+  // se RLS restringir leitura nas tabelas relacionadas no join.
   return (data || []).map((item: any) => {
     const maquinario = Array.isArray(item.maquinario) ? item.maquinario[0] : item.maquinario
     return {

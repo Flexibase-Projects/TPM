@@ -260,8 +260,13 @@ export const MaquinarioDetailsDialog = ({
                     letterSpacing: '0.5px',
                   }}
                 >
-                  Checklist de Limpeza
+                  Checklist de Limpeza (Limpeza semanal)
                 </Typography>
+                {maquinario.proxima_limpeza_em && (
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Próxima limpeza: {new Date(maquinario.proxima_limpeza_em + 'T00:00:00').toLocaleDateString('pt-BR')}
+                  </Typography>
+                )}
                 <List dense sx={{ py: 0 }}>
                   {checklistLimpeza.map((item) => (
                     <ListItem
@@ -325,6 +330,9 @@ export const MaquinarioDetailsDialog = ({
                   }}
                 >
                   Checklist de Manutenção
+                  {maquinario.manutencao_periodo_dias != null && (
+                    <> (Manutenção em {maquinario.manutencao_periodo_dias} dias)</>
+                  )}
                 </Typography>
                 <List dense sx={{ py: 0 }}>
                   {checklistManutencao.map((item) => (

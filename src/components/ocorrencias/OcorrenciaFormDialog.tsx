@@ -32,6 +32,8 @@ interface OcorrenciaFormDialogProps {
   onSubmit: () => void
   ocorrencia?: OcorrenciaManutencao | null
   initialTipoOM?: TipoOM
+  initialMaquinarioId?: string
+  initialDescricao?: string
 }
 
 export const OcorrenciaFormDialog = ({
@@ -40,6 +42,8 @@ export const OcorrenciaFormDialog = ({
   onSubmit,
   ocorrencia,
   initialTipoOM,
+  initialMaquinarioId,
+  initialDescricao,
 }: OcorrenciaFormDialogProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -92,10 +96,10 @@ export const OcorrenciaFormDialog = ({
           const now = dayjs()
           setDataOcorrencia(now)
           setFormData({
-            maquinario_id: '',
+            maquinario_id: initialMaquinarioId || '',
             tipo_om: initialTipoOM,
             categoria: 'Azul',
-            descricao: '',
+            descricao: initialDescricao || '',
             data_ocorrencia: now.format('YYYY-MM-DDTHH:mm'),
             responsavel: '',
             status: 'novo',
@@ -119,7 +123,7 @@ export const OcorrenciaFormDialog = ({
         }
       }
     }
-  }, [open, ocorrencia, initialTipoOM])
+  }, [open, ocorrencia, initialTipoOM, initialMaquinarioId, initialDescricao])
 
   // Preencher responsável automaticamente quando máquina for selecionada
   useEffect(() => {
@@ -255,7 +259,7 @@ export const OcorrenciaFormDialog = ({
           {showTipoSelection && !ocorrencia ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <Typography variant="h6" sx={{ mb: 4, fontWeight: 600 }}>
-                Selecione o tipo de Ordem de Manutenção
+                Selecione a ordem de Manutenção
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
                 <Button
@@ -284,34 +288,6 @@ export const OcorrenciaFormDialog = ({
                   }}
                 >
                   CORRETIVA
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  disabled
-                  onClick={() => {
-                    setTipoOM('Preventiva')
-                    setShowTipoSelection(false)
-                    setFormData({
-                      ...formData,
-                      tipo_om: 'Preventiva',
-                    })
-                  }}
-                  sx={{
-                    minWidth: 200,
-                    py: 2,
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                      PREVENTIVA
-                    </Typography>
-                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 400, mt: 0.5 }}>
-                      (em desenvolvimento)
-                    </Typography>
-                  </Box>
                 </Button>
               </Box>
             </Box>

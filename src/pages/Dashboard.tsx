@@ -62,9 +62,20 @@ export const Dashboard = () => {
       setError(null)
       const data = await getDashboardMetrics()
       setMetrics(data)
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erro ao carregar métricas:', err)
-      setError('Erro ao carregar dados do dashboard')
+      const raw =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message ??
+            (err as { error_description?: string })?.error_description ??
+            String(err)
+      const isNetworkError =
+        raw.includes('Failed to fetch') || raw.includes('NetworkError')
+      const message = isNetworkError
+        ? 'Sem conexão com o servidor. Verifique a internet, o VITE_SUPABASE_URL no .env e se o projeto Supabase está ativo.'
+        : raw
+      setError(message)
     } finally {
       setLoading(false)
     }

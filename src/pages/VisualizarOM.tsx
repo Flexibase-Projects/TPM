@@ -52,9 +52,20 @@ export const VisualizarOM = () => {
         })
       )
       setOcorrencias(ocorrenciasComTempos)
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erro ao carregar ocorrências:', err)
-      setError('Erro ao carregar ordens de manutenção')
+      const raw =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message ??
+            (err as { error_description?: string })?.error_description ??
+            'Erro ao carregar ordens de manutenção'
+      const isNetworkError =
+        raw.includes('Failed to fetch') || raw.includes('NetworkError')
+      const message = isNetworkError
+        ? 'Sem conexão com o servidor. Verifique a internet, o VITE_SUPABASE_URL no .env e se o projeto Supabase está ativo.'
+        : raw
+      setError(message)
     } finally {
       setLoading(false)
     }

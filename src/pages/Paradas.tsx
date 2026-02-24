@@ -39,8 +39,19 @@ export const Paradas = () => {
       setError(null)
       const data = await getAllParadas()
       setParadas(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar paradas')
+    } catch (err: unknown) {
+      const raw =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message ??
+            (err as { error_description?: string })?.error_description ??
+            String(err)
+      const isNetworkError =
+        raw.includes('Failed to fetch') || raw.includes('NetworkError')
+      const message = isNetworkError
+        ? 'Sem conexão com o servidor. Verifique a internet, o VITE_SUPABASE_URL no .env e se o projeto Supabase está ativo.'
+        : raw
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -68,7 +79,7 @@ export const Paradas = () => {
       setSelectedParada(parada)
       setEditOpen(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados para edição')
+      setError(err instanceof Error ? err.message : 'Erro ao carregar dados do maquinário para edição')
     }
   }
 
@@ -97,14 +108,14 @@ export const Paradas = () => {
   // Filtrar paradas baseado nos filtros selecionados
   const filteredParadas = useMemo(() => {
     return paradas.filter((parada) => {
-      // Filtro por categoria
-      if (filters.categoria !== 'Todos' && parada.maquinario?.categoria !== filters.categoria) {
-        return false
+      // Filtro por categoria: quando maquinario é null, incluir só se filtro for Todos
+      if (filters.categoria !== 'Todos') {
+        if (!parada.maquinario || parada.maquinario.categoria !== filters.categoria) return false
       }
 
-      // Filtro por área
-      if (filters.areaId && parada.maquinario?.area?.id !== filters.areaId) {
-        return false
+      // Filtro por área: quando maquinario/area é null, incluir só se não houver filtro de área
+      if (filters.areaId) {
+        if (!parada.maquinario?.area || parada.maquinario.area.id !== filters.areaId) return false
       }
 
       // Filtro por termo de busca (busca em identificação da máquina e motivo)

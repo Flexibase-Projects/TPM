@@ -84,6 +84,8 @@ export const createMaquinario = async (formData: MaquinarioFormData): Promise<Ma
       status_maquinario: formData.status_maquinario || 'Disponivel',
       motivo_inativacao: formData.motivo_inativacao || null,
       imagem_url: formData.imagem_url ?? null,
+      manutencao_periodo_dias: formData.manutencao_periodo_dias ?? 30,
+      proxima_limpeza_em: formData.proxima_limpeza_em || null,
     })
     .select()
     .single()
@@ -140,6 +142,8 @@ export const updateMaquinario = async (
       status_maquinario: formData.status_maquinario || 'Disponivel',
       motivo_inativacao: formData.motivo_inativacao || null,
       imagem_url: formData.imagem_url ?? null,
+      manutencao_periodo_dias: formData.manutencao_periodo_dias ?? 30,
+      proxima_limpeza_em: formData.proxima_limpeza_em || null,
     })
     .eq('id', id)
     .select()

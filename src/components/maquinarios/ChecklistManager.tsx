@@ -27,25 +27,29 @@ interface ChecklistItem {
 interface ChecklistManagerProps {
   items: ChecklistItem[]
   onChange: (items: ChecklistItem[]) => void
+  /** Quando definido, só exibe/adiciona itens deste tipo e oculta o seletor de tipo */
+  tipoFilter?: 'Limpeza' | 'Manutenção'
 }
 
 export const ChecklistManager = ({
   items,
   onChange,
+  tipoFilter,
 }: ChecklistManagerProps) => {
   const [newItemDescricao, setNewItemDescricao] = useState('')
-  const [newItemTipo, setNewItemTipo] = useState<'Limpeza' | 'Manutenção'>('Limpeza')
+  const [newItemTipo, setNewItemTipo] = useState<'Limpeza' | 'Manutenção'>(tipoFilter ?? 'Limpeza')
+  const effectiveTipo = tipoFilter ?? newItemTipo
 
   const handleAdd = () => {
     if (newItemDescricao.trim()) {
       const newItem: ChecklistItem = {
         descricao: newItemDescricao.trim(),
-        tipo: newItemTipo,
+        tipo: effectiveTipo,
         ordem: items.length,
       }
       onChange([...items, newItem])
       setNewItemDescricao('')
-      setNewItemTipo('Limpeza')
+      if (!tipoFilter) setNewItemTipo('Limpeza')
     }
   }
 
@@ -94,19 +98,21 @@ export const ChecklistManager = ({
           value={newItemDescricao}
           onChange={(e) => setNewItemDescricao(e.target.value)}
         />
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Tipo</InputLabel>
-          <Select
-            value={newItemTipo}
-            onChange={(e) =>
-              setNewItemTipo(e.target.value as 'Limpeza' | 'Manutenção')
-            }
-            label="Tipo"
-          >
-            <MenuItem value="Limpeza">Limpeza</MenuItem>
-            <MenuItem value="Manutenção">Manutenção</MenuItem>
-          </Select>
-        </FormControl>
+        {!tipoFilter && (
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Tipo</InputLabel>
+            <Select
+              value={newItemTipo}
+              onChange={(e) =>
+                setNewItemTipo(e.target.value as 'Limpeza' | 'Manutenção')
+              }
+              label="Tipo"
+            >
+              <MenuItem value="Limpeza">Limpeza</MenuItem>
+              <MenuItem value="Manutenção">Manutenção</MenuItem>
+            </Select>
+          </FormControl>
+        )}
         <Button
           variant="outlined"
           startIcon={<AddIcon />}
@@ -138,9 +144,11 @@ export const ChecklistManager = ({
                 <Typography variant="body2" fontWeight={500}>
                   {item.descricao}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Tipo: {item.tipo}
-                </Typography>
+                {!tipoFilter && (
+                  <Typography variant="caption" color="text.secondary">
+                    Tipo: {item.tipo}
+                  </Typography>
+                )}
               </Box>
               <IconButton
                 size="small"

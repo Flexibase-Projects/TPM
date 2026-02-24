@@ -39,6 +39,8 @@ export interface Maquinario {
   status_maquinario?: StatusMaquinario
   motivo_inativacao?: string | null
   imagem_url?: string | null
+  manutencao_periodo_dias?: number | null
+  proxima_limpeza_em?: string | null
   created_at: string
   updated_at: string
   // Relacionamentos (populados via join)
@@ -58,6 +60,8 @@ export interface MaquinarioFormData {
   status_maquinario?: StatusMaquinario
   motivo_inativacao?: string | null
   imagem_url?: string | null
+  manutencao_periodo_dias?: number | null
+  proxima_limpeza_em?: string | null
   motivos_parada: string[]
   checklist_itens: Omit<ChecklistItem, 'id' | 'maquinario_id' | 'created_at' | 'updated_at'>[]
 }

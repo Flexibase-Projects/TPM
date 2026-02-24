@@ -5,6 +5,9 @@ export const APP_NAME = 'TPM - Controle de Maquinário'
 /** Quantidade de itens por página nas listagens (Maquinários, Paradas, OMs, etc.) */
 export const ROWS_PER_PAGE = 10
 
+/** Dias antes do vencimento para considerar manutenção/limpeza "próxima do fim" (avisos em Minhas OM's) */
+export const DIAS_AVISO_VENCIMENTO = 7
+
 // Prefixo para todas as tabelas do banco de dados
 export const TABLE_PREFIX = 'TPM_'
 

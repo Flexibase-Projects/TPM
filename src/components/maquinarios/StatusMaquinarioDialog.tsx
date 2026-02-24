@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import type { Maquinario, StatusMaquinario } from '../../types/maquinario'
 import { updateStatusMaquinario } from '../../services/maquinarioService'
+import { createParadaAutomaticaDesativacao } from '../../services/paradaService'
 
 interface StatusMaquinarioDialogProps {
   open: boolean
@@ -60,6 +61,14 @@ export const StatusMaquinarioDialog = ({
         status,
         status === 'Inativa' ? motivoInativacao : null
       )
+
+      if (status === 'Desativada') {
+        try {
+          await createParadaAutomaticaDesativacao(maquinario.id)
+        } catch (_) {
+          // Parada automática é best-effort; não bloqueia o sucesso da alteração de status
+        }
+      }
 
       onSuccess()
       onClose()

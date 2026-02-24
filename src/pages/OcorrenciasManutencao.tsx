@@ -67,10 +67,10 @@ export const OcorrenciasManutencao = () => {
             width: '100%',
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.9375rem' }}>
-            Selecione o tipo de Ordem de Manutenção
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.9375rem', textAlign: 'center' }}>
+            Selecione a ordem de Manutenção
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} justifyContent="center">
             <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
@@ -90,29 +90,6 @@ export const OcorrenciasManutencao = () => {
                   </Typography>
                   <Typography sx={{ fontSize: '0.75rem', fontWeight: 400, opacity: 0.9 }}>
                     Para problemas que precisam ser corrigidos
-                  </Typography>
-                </Box>
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Button
-                variant="outlined"
-                fullWidth
-                disabled
-                sx={{
-                  py: 1.5,
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                }}
-              >
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: '0.9375rem', fontWeight: 600 }}>
-                    PREVENTIVA
-                  </Typography>
-                  <Typography sx={{ fontSize: '0.6875rem', fontWeight: 400 }}>
-                    (em desenvolvimento)
                   </Typography>
                 </Box>
               </Button>
@@ -205,23 +182,6 @@ export const OcorrenciasManutencao = () => {
           <HelpOutlineIcon sx={{ fontSize: '1.25rem' }} />
           Perguntas Frequentes
         </Typography>
-        <Accordion sx={{ boxShadow: 'none', '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2 }}>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-              Qual a diferença entre OM Corretiva e Preventiva?
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ px: 2, pb: 2 }}>
-            <Typography variant="body2" sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
-              <strong>OM Corretiva:</strong> Utilizada quando há um problema real que precisa ser corrigido imediatamente. 
-              É aberta quando uma máquina apresenta falha, defeito ou não está funcionando corretamente.
-              <br /><br />
-              <strong>OM Preventiva:</strong> Utilizada para manutenções programadas e preventivas, realizadas antes que 
-              problemas ocorram. Ajuda a evitar falhas futuras e manter o equipamento em bom estado.
-            </Typography>
-          </AccordionDetails>
-        </Accordion>
-
         <Accordion sx={{ boxShadow: 'none', '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 1 }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2 }}>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>

@@ -19,10 +19,15 @@ import {
   Select,
   MenuItem,
 } from '@mui/material'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import dayjs from 'dayjs'
 import { AreasManager } from './AreasManager'
 import { MotivosParadaManager } from './MotivosParadaManager'
 import { ChecklistManager } from './ChecklistManager'
 import { createMaquinario, updateMaquinario, getAreas, uploadImagemMaquinario, getImagemDisplayUrl } from '../../services/maquinarioService'
+import { createParadaAutomaticaDesativacao } from '../../services/paradaService'
 import type { Maquinario, MaquinarioFormData, Area, StatusMaquinario } from '../../types/maquinario'
 
 const MAX_IMAGE_SIZE_MB = 5
@@ -53,6 +58,8 @@ export const MaquinarioFormDialog = ({
     status_maquinario: 'Disponivel',
     motivo_inativacao: null,
     imagem_url: null,
+    manutencao_periodo_dias: 30,
+    proxima_limpeza_em: null,
     motivos_parada: [],
     checklist_itens: [],
   })
@@ -75,6 +82,8 @@ export const MaquinarioFormDialog = ({
           status_maquinario: maquinario.status_maquinario || 'Disponivel',
           motivo_inativacao: maquinario.motivo_inativacao || null,
           imagem_url: maquinario.imagem_url ?? null,
+          manutencao_periodo_dias: maquinario.manutencao_periodo_dias ?? 30,
+          proxima_limpeza_em: maquinario.proxima_limpeza_em ?? null,
           motivos_parada: maquinario.motivos_parada?.map(m => m.descricao) || [],
           checklist_itens: maquinario.checklist_itens?.map(item => ({
             descricao: item.descricao,
@@ -92,6 +101,8 @@ export const MaquinarioFormDialog = ({
           status_maquinario: 'Disponivel',
           motivo_inativacao: null,
           imagem_url: null,
+          manutencao_periodo_dias: 30,
+          proxima_limpeza_em: null,
           motivos_parada: [],
           checklist_itens: [],
         })
@@ -156,11 +167,25 @@ export const MaquinarioFormDialog = ({
           payload = { ...formData, imagem_url: url }
         }
         await updateMaquinario(maquinario.id, payload)
+        if (payload.status_maquinario === 'Desativada') {
+          try {
+            await createParadaAutomaticaDesativacao(maquinario.id)
+          } catch (_) {
+            // Parada automática é best-effort; não bloqueia o sucesso do salvamento
+          }
+        }
       } else {
         const created = await createMaquinario({ ...formData, imagem_url: imagemFile ? null : formData.imagem_url ?? null })
         if (imagemFile) {
           const url = await uploadImagemMaquinario(created.id, imagemFile)
           await updateMaquinario(created.id, { ...formData, imagem_url: url })
+        }
+        if (formData.status_maquinario === 'Desativada') {
+          try {
+            await createParadaAutomaticaDesativacao(created.id)
+          } catch (_) {
+            // Parada automática é best-effort; não bloqueia o sucesso do salvamento
+          }
         }
       }
       await onSubmit()
@@ -541,17 +566,82 @@ export const MaquinarioFormDialog = ({
               </Paper>
             </Grid>
 
-            {/* Seção: Checklist */}
+            {/* Seção: Checklist de Limpeza */}
             <Grid item xs={12}>
               <Paper variant="outlined" sx={{ p: 2.5 }}>
                 <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
-                  Checklist de Limpeza e Manutenção
+                  Checklist de Limpeza (Limpeza semanal)
                 </Typography>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Próxima limpeza em"
+                    value={formData.proxima_limpeza_em ? dayjs(formData.proxima_limpeza_em) : null}
+                    onChange={(d) =>
+                      setFormData({
+                        ...formData,
+                        proxima_limpeza_em: d ? d.format('YYYY-MM-DD') : null,
+                      })
+                    }
+                    slotProps={{ textField: { size: 'small', fullWidth: true, sx: { maxWidth: 220, mb: 2 } } }}
+                  />
+                </LocalizationProvider>
                 <ChecklistManager
-                  items={formData.checklist_itens}
+                  items={formData.checklist_itens.filter((i) => i.tipo === 'Limpeza')}
                   onChange={(items) =>
-                    setFormData({ ...formData, checklist_itens: items })
+                    setFormData({
+                      ...formData,
+                      checklist_itens: [
+                        ...formData.checklist_itens.filter((i) => i.tipo !== 'Limpeza'),
+                        ...items,
+                      ],
+                    })
                   }
+                  tipoFilter="Limpeza"
+                />
+              </Paper>
+            </Grid>
+
+            {/* Seção: Checklist de Manutenção */}
+            <Grid item xs={12}>
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={600} component="span">
+                    Checklist de Manutenção (Manutenção em
+                  </Typography>
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <Select
+                      value={formData.manutencao_periodo_dias ?? 30}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          manutencao_periodo_dias: (e.target.value as 30 | 60 | 90 | 120) ?? 30,
+                        })
+                      }
+                      displayEmpty
+                      sx={{ height: 32, fontSize: '0.875rem' }}
+                    >
+                      <MenuItem value={30}>30 dias</MenuItem>
+                      <MenuItem value={60}>60 dias</MenuItem>
+                      <MenuItem value={90}>90 dias</MenuItem>
+                      <MenuItem value={120}>120 dias</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography variant="subtitle1" fontWeight={600} component="span">
+                    )
+                  </Typography>
+                </Box>
+                <ChecklistManager
+                  items={formData.checklist_itens.filter((i) => i.tipo === 'Manutenção')}
+                  onChange={(items) =>
+                    setFormData({
+                      ...formData,
+                      checklist_itens: [
+                        ...formData.checklist_itens.filter((i) => i.tipo !== 'Manutenção'),
+                        ...items,
+                      ],
+                    })
+                  }
+                  tipoFilter="Manutenção"
                 />
               </Paper>
             </Grid>

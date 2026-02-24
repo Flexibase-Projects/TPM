@@ -34,17 +34,31 @@ export const ParadasFiltersComponent = ({
   onFiltersChange,
 }: ParadasFiltersProps) => {
   const [areas, setAreas] = useState<Area[]>([])
+  const [areasLoading, setAreasLoading] = useState(true)
+  const [areasError, setAreasError] = useState<string | null>(null)
 
   useEffect(() => {
     loadAreas()
   }, [])
 
+  useEffect(() => {
+    if (areasLoading || !filters.areaId) return
+    const selectedExists = areas.some((a) => a.id === filters.areaId)
+    if (!selectedExists) onFiltersChange({ ...filters, areaId: '' })
+  }, [areas, areasLoading, filters.areaId])
+
   const loadAreas = async () => {
     try {
+      setAreasLoading(true)
+      setAreasError(null)
       const data = await getAreas()
       setAreas(data)
     } catch (error) {
       console.error('Erro ao carregar áreas:', error)
+      setAreasError('Erro ao carregar áreas')
+      setAreas([])
+    } finally {
+      setAreasLoading(false)
     }
   }
 
@@ -113,24 +127,46 @@ export const ParadasFiltersComponent = ({
 
           <Grid item xs={12} md={2.25}>
             <FormControl fullWidth size="small">
-              <InputLabel sx={{ fontSize: '0.8125rem' }}>Área</InputLabel>
+              <InputLabel id="paradas-filtro-area-label" shrink sx={{ fontSize: '0.8125rem' }}>
+                Área
+              </InputLabel>
               <Select
+                labelId="paradas-filtro-area-label"
                 value={filters.areaId}
                 label="Área"
                 onChange={(e) => handleAreaChange(e.target.value)}
+                displayEmpty
+                renderValue={(v) => {
+                  if (v === '') return 'Todos'
+                  const area = areas.find((a) => a.id === v)
+                  return area ? area.nome : 'Todos'
+                }}
                 sx={{
                   fontSize: '0.8125rem',
                   '& .MuiSelect-select': {
                     fontSize: '0.8125rem',
                   },
                 }}
+                disabled={areasLoading}
               >
-                <MenuItem value="" sx={{ fontSize: '0.8125rem' }}>Todos</MenuItem>
-                {areas.map((area) => (
+                <MenuItem value="" sx={{ fontSize: '0.8125rem' }}>
+                  {areasLoading ? 'Carregando áreas...' : 'Todos'}
+                </MenuItem>
+                {!areasLoading && areas.map((area) => (
                   <MenuItem key={area.id} value={area.id} sx={{ fontSize: '0.8125rem' }}>
                     {area.nome}
                   </MenuItem>
                 ))}
+                {!areasLoading && areas.length === 0 && !areasError && (
+                  <MenuItem value="_empty" disabled sx={{ fontSize: '0.8125rem' }}>
+                    Nenhuma área cadastrada
+                  </MenuItem>
+                )}
+                {areasError && (
+                  <MenuItem value="_error" disabled sx={{ fontSize: '0.8125rem' }}>
+                    {areasError}
+                  </MenuItem>
+                )}
               </Select>
             </FormControl>
           </Grid>
