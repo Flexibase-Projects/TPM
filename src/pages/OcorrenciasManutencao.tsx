@@ -94,6 +94,29 @@ export const OcorrenciasManutencao = () => {
                 </Box>
               </Button>
             </Grid>
+            <Grid item xs={12} sm={6}>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => handleCreate('Preditiva')}
+                sx={{
+                  py: 1.5,
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                }}
+              >
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                  <Typography sx={{ fontSize: '0.9375rem', fontWeight: 600 }}>
+                    PREDITIVA
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 400, opacity: 0.9 }}>
+                    Para evitar falhas futuras
+                  </Typography>
+                </Box>
+              </Button>
+            </Grid>
           </Grid>
         </Paper>
       </Box>

@@ -9,6 +9,7 @@ export interface ItemProximoVencimento {
   tipo: 'Limpeza' | 'Manutenção'
   data_prevista: string
   label: string
+  checklistItens: string[]
 }
 
 /**
@@ -63,12 +64,17 @@ export const getProximasManutencoesLimpezas = async (): Promise<ItemProximoVenci
       const dataPrevistaStr = dataPrevista.toISOString().slice(0, 10)
 
       if (dataPrevistaTime >= hojeTime && dataPrevistaTime <= fimJanelaTime) {
+        const itensManutencao = (maq.checklist_itens || [])
+          .filter((i) => i.tipo === 'Manutenção')
+          .sort((a, b) => a.ordem - b.ordem)
+          .map((i) => i.descricao)
         resultado.push({
           maquinario_id: maq.id,
           maquinario: { id: maq.id, identificacao: maq.identificacao, nome_operador: maq.nome_operador },
           tipo: 'Manutenção',
           data_prevista: dataPrevistaStr,
           label: `Manutenção ${periodoDias} dias`,
+          checklistItens: itensManutencao,
         })
       }
     }
@@ -79,12 +85,17 @@ export const getProximasManutencoesLimpezas = async (): Promise<ItemProximoVenci
       const dataPrevistaTime = dataPrevista.getTime()
 
       if (dataPrevistaTime >= hojeTime && dataPrevistaTime <= fimJanelaTime) {
+        const itensLimpeza = (maq.checklist_itens || [])
+          .filter((i) => i.tipo === 'Limpeza')
+          .sort((a, b) => a.ordem - b.ordem)
+          .map((i) => i.descricao)
         resultado.push({
           maquinario_id: maq.id,
           maquinario: { id: maq.id, identificacao: maq.identificacao, nome_operador: maq.nome_operador },
           tipo: 'Limpeza',
           data_prevista: proximaLimpeza,
           label: 'Limpeza semanal',
+          checklistItens: itensLimpeza,
         })
       }
     }

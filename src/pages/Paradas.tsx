@@ -38,9 +38,6 @@ export const Paradas = () => {
 
   const loadParadas = async () => {
     const myId = ++loadIdRef.current
-    // #region agent log
-    fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'loadParadas started',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     try {
       setLoading(true)
       setError(null)
@@ -48,16 +45,10 @@ export const Paradas = () => {
       for (let attempt = 0; attempt <= RETRY_ATTEMPTS; attempt++) {
         try {
           if (myId !== loadIdRef.current) {
-            // #region agent log
-            fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'skip stale before fetch',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-            // #endregion
             return
           }
           const data = await getAllParadas()
           if (myId !== loadIdRef.current) return
-          // #region agent log
-          fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'setParadas success',data:{myId,loadIdRefCurrent:loadIdRef.current,count:data?.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-          // #endregion
           setParadas(data)
           return
         } catch (err) {
@@ -73,9 +64,6 @@ export const Paradas = () => {
         }
       }
       if (myId !== loadIdRef.current) {
-        // #region agent log
-        fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'skip stale before setError',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
         return
       }
       const raw =
@@ -89,15 +77,9 @@ export const Paradas = () => {
       const message = isNetworkError
         ? 'Sem conexão com o servidor. Verifique a internet, o VITE_SUPABASE_URL no .env e se o projeto Supabase está ativo.'
         : raw
-      // #region agent log
-      fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'setError called',data:{myId,loadIdRefCurrent:loadIdRef.current,raw:String(raw).slice(0,80),isNetworkError},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       setError(message)
     } finally {
       if (myId !== loadIdRef.current) {
-        // #region agent log
-        fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'skip stale in finally',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
         return
       }
       setLoading(false)
@@ -107,9 +89,6 @@ export const Paradas = () => {
   useEffect(() => {
     loadParadas()
     return () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:useEffect',message:'effect cleanup',data:{loadIdRefBefore:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
       loadIdRef.current += 1
     }
   }, [])

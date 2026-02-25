@@ -60,6 +60,12 @@ export interface DashboardMetrics {
     ocorrenciasAbertas: number
     categoria: 'Crítica' | 'Normal'
   }>
+  totalChecklistsManutencao: number
+  totalRotinasLimpeza: number
+  maquinariosComChecklistManutencao: number
+  maquinariosComChecklistLimpeza: number
+  omsPreventivasAbertas: number
+  omsPreventivasConcluidas: number
 }
 
 /**
@@ -98,7 +104,9 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
   const ocorrenciasCorretivas = ocorrencias.filter(
     (oc) => oc.tipo_om === 'Corretiva' || !oc.tipo_om
   )
-  const ocorrenciasPreventivas = ocorrencias.filter((oc) => oc.tipo_om === 'Preventiva')
+  const ocorrenciasPreventivas = ocorrencias.filter(
+    (oc) => oc.tipo_om === 'Preventiva' || oc.tipo_om === 'Preditiva'
+  )
 
   // Calcular status dos maquinários
   const statusCalculados = maquinarios.map((maq) =>
@@ -264,7 +272,7 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
     ocorrenciasPorMesMap.set(mesAno, {
       quantidade: atual.quantidade + 1,
       corretivas: atual.corretivas + ((oc.tipo_om === 'Corretiva' || !oc.tipo_om) ? 1 : 0),
-      preventivas: atual.preventivas + (oc.tipo_om === 'Preventiva' ? 1 : 0),
+      preventivas: atual.preventivas + (oc.tipo_om === 'Preventiva' || oc.tipo_om === 'Preditiva' ? 1 : 0),
     })
   })
 
@@ -387,6 +395,30 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
     })
     .sort((a, b) => b.score - a.score)
 
+  // Indicadores de manutenção preventiva
+  const totalChecklistsManutencao = maquinarios.reduce(
+    (sum, m) => sum + (m.checklist_itens || []).filter((i) => i.tipo === 'Manutenção').length,
+    0
+  )
+  const totalRotinasLimpeza = maquinarios.reduce(
+    (sum, m) => sum + (m.checklist_itens || []).filter((i) => i.tipo === 'Limpeza').length,
+    0
+  )
+  const maquinariosComChecklistManutencao = maquinarios.filter(
+    (m) => (m.checklist_itens || []).some((i) => i.tipo === 'Manutenção')
+  ).length
+  const maquinariosComChecklistLimpeza = maquinarios.filter(
+    (m) => (m.checklist_itens || []).some((i) => i.tipo === 'Limpeza')
+  ).length
+
+  const omsPreventivas = ocorrencias.filter((oc) => oc.tipo_om === 'Preventiva')
+  const omsPreventivasAbertas = omsPreventivas.filter(
+    (oc) => oc.status !== 'concluído' && oc.status !== 'cancelado'
+  ).length
+  const omsPreventivasConcluidas = omsPreventivas.filter(
+    (oc) => oc.status === 'concluído'
+  ).length
+
   return {
     totalMaquinarios: maquinarios.length,
     maquinariosDisponiveis,
@@ -412,5 +444,11 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
     ocorrenciasPorMes,
     desempenhoFuncionarios,
     scoreProblemasMaquinarios,
+    totalChecklistsManutencao,
+    totalRotinasLimpeza,
+    maquinariosComChecklistManutencao,
+    maquinariosComChecklistLimpeza,
+    omsPreventivasAbertas,
+    omsPreventivasConcluidas,
   }
 }

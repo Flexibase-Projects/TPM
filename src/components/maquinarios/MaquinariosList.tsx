@@ -99,9 +99,6 @@ export const MaquinariosList = ({
   }
 
   const getStatusIcon = (status: StatusMaquinarioCalculado | undefined) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MaquinariosList.tsx:90',message:'getStatusIcon called',data:{status,statusType:typeof status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     switch (status) {
       case 'Disponivel':
         return <CheckCircleIcon sx={{ color: '#4caf50', fontSize: '1.125rem' }} />
@@ -112,9 +109,6 @@ export const MaquinariosList = ({
       case 'Inativa':
         return <BlockIcon sx={{ color: '#757575', fontSize: '1.125rem' }} />
       default:
-        // #region agent log
-        fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MaquinariosList.tsx:100',message:'getStatusIcon default case',data:{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         return <CheckCircleIcon sx={{ color: '#4caf50', fontSize: '1.125rem' }} />
     }
   }
@@ -198,12 +192,6 @@ export const MaquinariosList = ({
               }}
             >
               <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
-                {/* #region agent log */}
-                {(() => {
-                  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MaquinariosList.tsx:140',message:'rendering status cell',data:{maquinarioId:maquinario.id,statusCalculado:maquinario.status_calculado},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-                  return null;
-                })()}
-                {/* #endregion */}
                 <Tooltip title={getStatusLabel(maquinario.status_calculado)} arrow>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     {getStatusIcon(maquinario.status_calculado)}

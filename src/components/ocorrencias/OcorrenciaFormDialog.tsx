@@ -34,6 +34,7 @@ interface OcorrenciaFormDialogProps {
   initialTipoOM?: TipoOM
   initialMaquinarioId?: string
   initialDescricao?: string
+  initialDataOcorrencia?: string
 }
 
 export const OcorrenciaFormDialog = ({
@@ -44,6 +45,7 @@ export const OcorrenciaFormDialog = ({
   initialTipoOM,
   initialMaquinarioId,
   initialDescricao,
+  initialDataOcorrencia,
 }: OcorrenciaFormDialogProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -63,16 +65,10 @@ export const OcorrenciaFormDialog = ({
   })
 
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:58',message:'useEffect triggered',data:{open,hasOcorrencia:!!ocorrencia,initialTipoOM},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     if (open) {
       setError(null)
       loadMaquinarios()
       if (ocorrencia) {
-        // #region agent log
-        fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:65',message:'Editing ocorrencia',data:{ocorrenciaId:ocorrencia.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         setTipoOM(ocorrencia.tipo_om || 'Corretiva')
         setShowTipoSelection(false)
         setDataOcorrencia(dayjs(ocorrencia.data_ocorrencia))
@@ -87,20 +83,19 @@ export const OcorrenciaFormDialog = ({
           observacoes: ocorrencia.observacoes || '',
         })
       } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:79',message:'Creating new ocorrencia',data:{initialTipoOM},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         if (initialTipoOM) {
           setTipoOM(initialTipoOM)
           setShowTipoSelection(false)
-          const now = dayjs()
-          setDataOcorrencia(now)
+          const dataInicial = initialDataOcorrencia
+            ? dayjs(initialDataOcorrencia)
+            : dayjs()
+          setDataOcorrencia(dataInicial)
           setFormData({
             maquinario_id: initialMaquinarioId || '',
             tipo_om: initialTipoOM,
             categoria: 'Azul',
             descricao: initialDescricao || '',
-            data_ocorrencia: now.format('YYYY-MM-DDTHH:mm'),
+            data_ocorrencia: dataInicial.format('YYYY-MM-DDTHH:mm'),
             responsavel: '',
             status: 'novo',
             observacoes: '',
@@ -123,7 +118,7 @@ export const OcorrenciaFormDialog = ({
         }
       }
     }
-  }, [open, ocorrencia, initialTipoOM, initialMaquinarioId, initialDescricao])
+  }, [open, ocorrencia, initialTipoOM, initialMaquinarioId, initialDescricao, initialDataOcorrencia])
 
   // Preencher responsável automaticamente quando máquina for selecionada
   useEffect(() => {
@@ -148,21 +143,15 @@ export const OcorrenciaFormDialog = ({
   }
 
   const handleSubmit = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:91',message:'handleSubmit called',data:{formData,isEdit:!!ocorrencia},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
     setError(null)
 
-    const isCorretiva = (ocorrencia?.tipo_om ?? tipoOM) === 'Corretiva'
-    if (isCorretiva) {
-      if (!formData.maquinario_id?.trim()) {
-        setError('Selecione o maquinário.')
-        return
-      }
-      if (!formData.descricao?.trim()) {
-        setError('Preencha a descrição do problema.')
-        return
-      }
+    if (!formData.maquinario_id?.trim()) {
+      setError('Selecione o maquinário.')
+      return
+    }
+    if (!formData.descricao?.trim()) {
+      setError('Preencha a descrição.')
+      return
     }
 
     try {
@@ -172,23 +161,14 @@ export const OcorrenciaFormDialog = ({
         ...formData,
         data_ocorrencia: dataOcorrencia ? dataOcorrencia.toISOString() : new Date().toISOString(),
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:100',message:'Before API call',data:{submitData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
 
       if (ocorrencia) {
         await updateOcorrencia(ocorrencia.id, submitData)
       } else {
         await createOcorrencia(submitData)
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:108',message:'API call successful',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       onSubmit()
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:111',message:'Error saving ocorrencia',data:{error:error instanceof Error?error.message:String(error),errorStack:error instanceof Error?error.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       console.error('Erro ao salvar ocorrência:', error)
       const err = error as { message?: string; code?: string; details?: string }
       const errorMessage =
@@ -250,12 +230,6 @@ export const OcorrenciaFormDialog = ({
           </Alert>
         )}
         <Box sx={{ pt: 1 }}>
-          {/* #region agent log */}
-          {(() => {
-            fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:203',message:'Rendering form content',data:{showTipoSelection,tipoOM,hasOcorrencia:!!ocorrencia},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-            return null;
-          })()}
-          {/* #endregion */}
           {showTipoSelection && !ocorrencia ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <Typography variant="h6" sx={{ mb: 4, fontWeight: 600 }}>
@@ -266,9 +240,6 @@ export const OcorrenciaFormDialog = ({
                   variant="contained"
                   size="large"
                   onClick={() => {
-                    // #region agent log
-                    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:197',message:'Corretiva button clicked',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                    // #endregion
                     setTipoOM('Corretiva')
                     setShowTipoSelection(false)
                     const now = dayjs()
@@ -291,35 +262,32 @@ export const OcorrenciaFormDialog = ({
                 </Button>
               </Box>
             </Box>
-          ) : tipoOM === 'Preventiva' && !ocorrencia ? (
-            <Box sx={{ mt: 3, textAlign: 'center', py: 4 }}>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                Funcionalidade de OM Preventiva em desenvolvimento
-              </Typography>
-              <Button
-                variant="outlined"
-                disabled
-                size="large"
-              >
-                Executar
-              </Button>
-            </Box>
-          ) : (
-            (tipoOM === 'Corretiva' || ocorrencia?.tipo_om === 'Corretiva' || ocorrencia) && (
+          ) : (tipoOM || ocorrencia) && (
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
               <Grid container spacing={2.5} sx={{ mt: !ocorrencia ? 2 : 0 }}>
-                {/* Texto explicativo */}
                 <Grid item xs={12}>
-                  <Alert severity="info" sx={{ mb: 2, borderRadius: 2, fontSize: '0.8125rem' }}>
-                    <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 500, mb: 0.5 }}>
-                      Criação de Ordem de Manutenção Corretiva
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                      Preencha todos os campos com atenção. Na descrição do problema, seja o mais detalhado possível,
-                      incluindo sintomas observados, condições em que o problema ocorreu e qualquer informação relevante
-                      que possa auxiliar na resolução.
-                    </Typography>
-                  </Alert>
+                  {(tipoOM === 'Preventiva' || tipoOM === 'Preditiva') && !ocorrencia ? (
+                    <Alert severity="success" sx={{ mb: 2, borderRadius: 2, fontSize: '0.8125rem' }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 500, mb: 0.5 }}>
+                        Criação de Ordem de Manutenção Preventiva
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                        Verifique os dados pré-preenchidos a partir do checklist do maquinário. Ajuste a categoria,
+                        responsável e observações conforme necessário antes de salvar.
+                      </Typography>
+                    </Alert>
+                  ) : (
+                    <Alert severity="info" sx={{ mb: 2, borderRadius: 2, fontSize: '0.8125rem' }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 500, mb: 0.5 }}>
+                        {ocorrencia ? 'Edição de Ordem de Manutenção' : 'Criação de Ordem de Manutenção Corretiva'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                        Preencha todos os campos com atenção. Na descrição do problema, seja o mais detalhado possível,
+                        incluindo sintomas observados, condições em que o problema ocorreu e qualquer informação relevante
+                        que possa auxiliar na resolução.
+                      </Typography>
+                    </Alert>
+                  )}
                 </Grid>
 
               {/* Linha 1: Maquinário */}
@@ -520,9 +488,6 @@ export const OcorrenciaFormDialog = ({
                   label="Data e Hora da Ocorrência"
                   value={dataOcorrencia}
                   onChange={(newValue) => {
-                    // #region agent log
-                    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaFormDialog.tsx:477',message:'DateTimePicker onChange',data:{newValue:newValue?.format('YYYY-MM-DDTHH:mm')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                    // #endregion
                     setDataOcorrencia(newValue)
                     if (newValue) {
                       setFormData({
@@ -545,11 +510,10 @@ export const OcorrenciaFormDialog = ({
                 />
               </Grid>
 
-              {/* Linha 4: Descrição do Problema */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Descrição do Problema"
+                  label={tipoOM === 'Preventiva' || tipoOM === 'Preditiva' ? 'Descrição da Manutenção' : 'Descrição do Problema'}
                   value={formData.descricao}
                   onChange={(e) =>
                     setFormData({ ...formData, descricao: e.target.value })
@@ -557,7 +521,11 @@ export const OcorrenciaFormDialog = ({
                   required
                   multiline
                   rows={6}
-                  placeholder="Descreva detalhadamente o problema encontrado no maquinário..."
+                  placeholder={
+                    tipoOM === 'Preventiva' || tipoOM === 'Preditiva'
+                      ? 'Itens do checklist de manutenção preventiva...'
+                      : 'Descreva detalhadamente o problema encontrado no maquinário...'
+                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       fontSize: '0.8125rem',
@@ -596,7 +564,7 @@ export const OcorrenciaFormDialog = ({
             <Button
               onClick={handleSubmit}
               variant="contained"
-              disabled={loading || !tipoOM || (tipoOM === 'Corretiva' && (!formData.maquinario_id || !formData.descricao))}
+              disabled={loading || !tipoOM || !formData.maquinario_id || !formData.descricao}
               size="large"
               startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
             >

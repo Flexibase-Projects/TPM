@@ -10,9 +10,6 @@ import type {
 import { updateStatusMaquinario } from './maquinarioService'
 
 export const getOcorrencias = async (): Promise<OcorrenciaManutencao[]> => {
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ocorrenciaService.ts:4',message:'getOcorrencias called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
   const { data, error } = await supabase
     .from('TPM_ocorrencias_manutencao')
     .select(`
@@ -21,9 +18,6 @@ export const getOcorrencias = async (): Promise<OcorrenciaManutencao[]> => {
     `)
     .order('data_ocorrencia', { ascending: false })
 
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ocorrenciaService.ts:13',message:'getOcorrencias result',data:{hasData:!!data,dataCount:data?.length||0,hasError:!!error,error:error?{message:error.message,code:error.code,details:error.details}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
   if (error) throw error
   
   // Transformar os dados para o formato esperado
@@ -73,9 +67,6 @@ export const getOcorrenciasByMaquinario = async (maquinarioId: string): Promise<
 }
 
 export const createOcorrencia = async (formData: OcorrenciaFormData): Promise<OcorrenciaManutencao> => {
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ocorrenciaService.ts:67',message:'createOcorrencia entry',data:{formData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
   const insertData: any = {
     maquinario_id: formData.maquinario_id,
     tipo_om: formData.tipo_om || 'Corretiva',
@@ -86,9 +77,6 @@ export const createOcorrencia = async (formData: OcorrenciaFormData): Promise<Oc
     status: formData.status,
     observacoes: formData.observacoes || null,
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ocorrenciaService.ts:72',message:'Before Supabase insert ocorrencia',data:{insertData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
   const { data, error } = await supabase
     .from('TPM_ocorrencias_manutencao')
     .insert(insertData)
@@ -98,9 +86,6 @@ export const createOcorrencia = async (formData: OcorrenciaFormData): Promise<Oc
     `)
     .single()
 
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ocorrenciaService.ts:95',message:'After Supabase insert ocorrencia',data:{hasData:!!data,hasError:!!error,error:error?{message:error.message,code:error.code,details:error.details}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
   if (error) throw error
   
   const result = {

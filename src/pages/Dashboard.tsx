@@ -28,6 +28,10 @@ import {
   Engineering,
   AccessTime,
   People,
+  Checklist,
+  CleaningServices,
+  AssignmentTurnedIn,
+  Assignment,
 } from '@mui/icons-material'
 import {
   PieChart,
@@ -608,7 +612,135 @@ export const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* 4. QUARTA LINHA - Score de Problemas dos Maquinários */}
+      {/* 4. INDICADORES DE MANUTENÇÃO PREVENTIVA */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Indicadores de Manutenção Preventiva
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Visão geral dos checklists, rotinas de limpeza e OMs preventivas
+          </Typography>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card
+            sx={{
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Checklists de Manutenção
+                </Typography>
+                <Checklist sx={{ fontSize: 28, color: theme.palette.info.main }} />
+              </Box>
+              <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 1 }}>
+                {metrics.totalChecklistsManutencao}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {metrics.maquinariosComChecklistManutencao} maquinário{metrics.maquinariosComChecklistManutencao !== 1 ? 's' : ''}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card
+            sx={{
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Rotinas de Limpeza
+                </Typography>
+                <CleaningServices sx={{ fontSize: 28, color: theme.palette.success.main }} />
+              </Box>
+              <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 1 }}>
+                {metrics.totalRotinasLimpeza}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {metrics.maquinariosComChecklistLimpeza} maquinário{metrics.maquinariosComChecklistLimpeza !== 1 ? 's' : ''}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card
+            sx={{
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  OMs Preventivas Abertas
+                </Typography>
+                <Assignment sx={{ fontSize: 28, color: theme.palette.warning.main }} />
+              </Box>
+              <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 1 }}>
+                {metrics.omsPreventivasAbertas}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                de {metrics.ocorrenciasPreventivas} total
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card
+            sx={{
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  OMs Preventivas Concluídas
+                </Typography>
+                <AssignmentTurnedIn sx={{ fontSize: 28, color: theme.palette.success.main }} />
+              </Box>
+              <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 1 }}>
+                {metrics.omsPreventivasConcluidas}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                concluídas com sucesso
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* 5. QUINTA LINHA - Score de Problemas dos Maquinários */}
       {metrics.scoreProblemasMaquinarios && metrics.scoreProblemasMaquinarios.length > 0 && (
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12}>

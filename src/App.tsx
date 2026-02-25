@@ -10,11 +10,6 @@ import { Paradas } from './pages/Paradas'
 import { MinhasOMs } from './pages/MinhasOMs'
 
 function App() {
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:21',message:'App component rendered',data:{pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  }
-  // #endregion
   return (
     <ThemeContextProvider>
       <CssBaseline />

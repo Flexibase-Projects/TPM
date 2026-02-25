@@ -6,18 +6,11 @@ import {
   CircularProgress,
   Alert,
   TablePagination,
-  Button,
-  Card,
-  CardContent,
-  CardActions,
-  Grid,
 } from '@mui/material'
 import { OcorrenciasList } from '../components/ocorrencias/OcorrenciasList'
 import { OcorrenciaManageDialog } from '../components/ocorrencias/OcorrenciaManageDialog'
-import { OcorrenciaFormDialog } from '../components/ocorrencias/OcorrenciaFormDialog'
 import { OcorrenciasFiltersComponent, type OcorrenciasFilters } from '../components/ocorrencias/OcorrenciasFilters'
 import { getOcorrencias, deleteOcorrencia, calcularTempos } from '../services/ocorrenciaService'
-import { getProximasManutencoesLimpezas, type ItemProximoVencimento } from '../services/manutencaoPreventivaService'
 import { ROWS_PER_PAGE } from '../utils/constants'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
 
@@ -42,9 +35,6 @@ export const MinhasOMs = () => {
     searchTerm: '',
   })
   const [page, setPage] = useState(0)
-  const [proximasList, setProximasList] = useState<ItemProximoVencimento[]>([])
-  const [formOpen, setFormOpen] = useState(false)
-  const [formInitialItem, setFormInitialItem] = useState<ItemProximoVencimento | null>(null)
   const currentUser = getCurrentUser()
 
   const loadOcorrencias = async () => {
@@ -98,18 +88,8 @@ export const MinhasOMs = () => {
     }
   }
 
-  const loadProximas = async () => {
-    try {
-      const list = await getProximasManutencoesLimpezas()
-      setProximasList(list)
-    } catch {
-      setProximasList([])
-    }
-  }
-
   useEffect(() => {
     loadOcorrencias()
-    loadProximas()
   }, [])
 
   const filteredOcorrencias = useMemo(() => {
@@ -181,7 +161,6 @@ export const MinhasOMs = () => {
 
   const handleManageUpdate = () => {
     loadOcorrencias()
-    loadProximas()
     if (selectedOcorrencia) {
       // Atualizar a ocorrência selecionada também
       getOcorrencias().then((data) => {
@@ -242,40 +221,6 @@ export const MinhasOMs = () => {
         Visualize e gerencie as ordens de manutenção que você abriu ou está responsável por atender
       </Typography>
 
-      {proximasList.length > 0 && (
-        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-          <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-            Manutenções e limpezas próximas do vencimento
-          </Typography>
-          <Grid container spacing={2}>
-            {proximasList.map((item) => (
-              <Grid item xs={12} sm={6} md={4} key={`${item.maquinario_id}-${item.tipo}-${item.data_prevista}`}>
-                <Card variant="outlined">
-                  <CardContent sx={{ '&:last-child': { pb: 1.5 } }}>
-                    <Typography variant="subtitle2">{item.maquinario.identificacao}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {item.label} — previsto: {new Date(item.data_prevista + 'T00:00:00').toLocaleDateString('pt-BR')}
-                    </Typography>
-                  </CardContent>
-                  <CardActions sx={{ pt: 0, px: 1.5, pb: 1 }}>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => {
-                        setFormInitialItem(item)
-                        setFormOpen(true)
-                      }}
-                    >
-                      Abrir OM
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
-      )}
-
       <Paper sx={{ p: 2, mb: 2 }}>
         <OcorrenciasFiltersComponent
           filters={filters}
@@ -311,23 +256,6 @@ export const MinhasOMs = () => {
           onUpdate={handleManageUpdate}
         />
       )}
-
-      <OcorrenciaFormDialog
-        open={formOpen}
-        onClose={() => {
-          setFormOpen(false)
-          setFormInitialItem(null)
-        }}
-        onSubmit={() => {
-          setFormOpen(false)
-          setFormInitialItem(null)
-          loadOcorrencias()
-          loadProximas()
-        }}
-        initialTipoOM="Preventiva"
-        initialMaquinarioId={formInitialItem?.maquinario_id}
-        initialDescricao={formInitialItem ? `${formInitialItem.label} (programada)` : undefined}
-      />
     </Box>
   )
 }

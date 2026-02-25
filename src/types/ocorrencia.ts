@@ -1,6 +1,6 @@
 // Tipos relacionados a Ocorrências de Manutenção
 
-export type TipoOM = 'Corretiva' | 'Preventiva'
+export type TipoOM = 'Corretiva' | 'Preventiva' | 'Preditiva'
 export type CategoriaOcorrencia = 'Vermelho' | 'Verde' | 'Azul'
 export type StatusOcorrencia = 'novo' | 'na fila' | 'em execução' | 'em espera' | 'concluído' | 'cancelado'
 

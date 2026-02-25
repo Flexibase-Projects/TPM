@@ -65,13 +65,7 @@ export const OcorrenciaManageDialog = ({
   const retrocederRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:72',message:'useEffect triggered',data:{open,hasOcorrencia:!!ocorrencia,ocorrenciaId:ocorrencia?.id,ocorrenciaStatus:ocorrencia?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
     if (open && ocorrencia) {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:75',message:'Setting initial state',data:{ocorrenciaId:ocorrencia.id,status:ocorrencia.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
       setNovoStatus('')
       setComentario('')
       setMostrarRetroceder(false)
@@ -79,38 +73,20 @@ export const OcorrenciaManageDialog = ({
       // Caso contrário, usar o responsável atual ou vazio
       setResponsavel(ocorrencia.status === 'novo' ? '' : (ocorrencia.responsavel || ''))
       setCategoria(ocorrencia.categoria)
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:84',message:'Calling loadHistorico and loadTempos',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
       loadHistorico()
       loadTempos()
     }
   }, [open, ocorrencia?.id, ocorrencia?.status])
 
   const loadHistorico = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:82',message:'loadHistorico called',data:{hasOcorrencia:!!ocorrencia,ocorrenciaId:ocorrencia?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
     if (!ocorrencia) {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:85',message:'loadHistorico early return - no ocorrencia',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       return
     }
     setLoadingHistorico(true)
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:90',message:'Before getHistoricoStatus call',data:{ocorrenciaId:ocorrencia.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       const data = await getHistoricoStatus(ocorrencia.id)
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:93',message:'After getHistoricoStatus call',data:{dataLength:data?.length||0,hasError:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       setHistorico(data)
     } catch (err) {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:96',message:'Error in loadHistorico',data:{error:err instanceof Error?err.message:String(err)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       console.error('Erro ao carregar histórico:', err)
     } finally {
       setLoadingHistorico(false)
@@ -192,33 +168,16 @@ export const OcorrenciaManageDialog = ({
   }
 
   const handleMostrarRetroceder = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:199',message:'handleMostrarRetroceder called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
     setMostrarRetroceder(true)
     // Scroll para a seção de retroceder após um pequeno delay para garantir que foi renderizada
     setTimeout(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:204',message:'Scrolling to retroceder section',data:{hasRef:!!retrocederRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      // #endregion
       retrocederRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 100)
   }
 
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:167',message:'Component render start',data:{hasOcorrencia:!!ocorrencia,ocorrenciaId:ocorrencia?.id,ocorrenciaStatus:ocorrencia?.status,open},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-
   if (!ocorrencia) {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:171',message:'Ocorrencia is null, returning null',data:{open},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     return null
   }
-
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:175',message:'Before getCategoriaColor definition',data:{ocorrenciaId:ocorrencia.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
 
   const getCategoriaColor = (cat: string) => {
     switch (cat) {
@@ -264,10 +223,6 @@ export const OcorrenciaManageDialog = ({
   }
   
   const progresso = calcularProgresso()
-
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OcorrenciaManageDialog.tsx:220',message:'Before Dialog render',data:{progresso,statusRequerComentario,novoStatus,mostrarRetroceder},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
 
   return (
     <Dialog

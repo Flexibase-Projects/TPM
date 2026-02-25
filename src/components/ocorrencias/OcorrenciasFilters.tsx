@@ -126,6 +126,7 @@ export const OcorrenciasFiltersComponent = ({
               <MenuItem value="Todos" sx={{ fontSize: '0.8125rem' }}>Todos</MenuItem>
               <MenuItem value="Corretiva" sx={{ fontSize: '0.8125rem' }}>Corretiva</MenuItem>
               <MenuItem value="Preventiva" sx={{ fontSize: '0.8125rem' }}>Preventiva</MenuItem>
+              <MenuItem value="Preditiva" sx={{ fontSize: '0.8125rem' }}>Preditiva</MenuItem>
             </Select>
           </FormControl>
         </Grid>

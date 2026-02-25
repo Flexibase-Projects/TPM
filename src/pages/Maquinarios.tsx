@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Box,
   Typography,
@@ -21,6 +22,10 @@ import { ROWS_PER_PAGE } from '../utils/constants'
 import type { Maquinario } from '../types/maquinario'
 
 export const Maquinarios = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const maquinarioIdFromUrl = searchParams.get('maquinarioId')
+  const openedFromUrlRef = useRef<string | null>(null)
+
   const [maquinarios, setMaquinarios] = useState<Maquinario[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,15 +43,9 @@ export const Maquinarios = () => {
   const [page, setPage] = useState(0)
 
   const loadMaquinarios = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:37',message:'loadMaquinarios called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     try {
       setLoading(true)
       setError(null)
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:42',message:'calling getMaquinarios',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const data = await getMaquinarios()
 
       if (data.length === 0) {
@@ -75,13 +74,7 @@ export const Maquinarios = () => {
       })
 
       setMaquinarios(maquinariosComStatus)
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:76',message:'setMaquinarios called',data:{count:maquinariosComStatus?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
     } catch (err) {
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:78',message:'loadMaquinarios error',data:{error:err instanceof Error?err.message:String(err),stack:err instanceof Error?err.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const msg = err instanceof Error ? err.message : 'Erro ao carregar maquinários'
       setError(
         msg === 'Failed to fetch'
@@ -90,15 +83,37 @@ export const Maquinarios = () => {
       )
     } finally {
       setLoading(false)
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/d688d544-a3d8-45d0-aec4-1bbd8aaad8c9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Maquinarios.tsx:82',message:'loadMaquinarios finally',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
     }
   }
 
   useEffect(() => {
     loadMaquinarios()
   }, [])
+
+  // Abrir detalhe do maquinário quando vier da URL (ex.: notificação em Visualizar OM)
+  useEffect(() => {
+    if (!maquinarioIdFromUrl || loading) return
+    if (openedFromUrlRef.current === maquinarioIdFromUrl) return
+
+    const openDetailsFromUrl = async () => {
+      try {
+        const fullData = await getMaquinarioById(maquinarioIdFromUrl)
+        setSelectedMaquinario(fullData)
+        setDetailsOpen(true)
+        openedFromUrlRef.current = maquinarioIdFromUrl
+      } catch {
+        openedFromUrlRef.current = maquinarioIdFromUrl
+        const next = new URLSearchParams(searchParams)
+        next.delete('maquinarioId')
+        setSearchParams(next)
+      }
+    }
+    openDetailsFromUrl()
+  }, [maquinarioIdFromUrl, loading, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!maquinarioIdFromUrl) openedFromUrlRef.current = null
+  }, [maquinarioIdFromUrl])
 
   const handleCreate = () => {
     setEditingMaquinario(null)
@@ -155,6 +170,12 @@ export const Maquinarios = () => {
   const handleDetailsClose = () => {
     setDetailsOpen(false)
     setSelectedMaquinario(null)
+    if (maquinarioIdFromUrl) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('maquinarioId')
+      setSearchParams(next, { replace: true })
+      openedFromUrlRef.current = null
+    }
   }
 
   const handleRegistrarParada = (maquinario: Maquinario) => {
