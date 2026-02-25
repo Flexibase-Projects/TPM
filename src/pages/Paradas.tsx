@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Box,
   Typography,
@@ -32,33 +32,86 @@ export const Paradas = () => {
     dataFiltro: null,
   })
   const [page, setPage] = useState(0)
+  const loadIdRef = useRef(0)
+  const RETRY_ATTEMPTS = 2
+  const RETRY_DELAY_MS = 500
 
   const loadParadas = async () => {
+    const myId = ++loadIdRef.current
+    // #region agent log
+    fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'loadParadas started',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     try {
       setLoading(true)
       setError(null)
-      const data = await getAllParadas()
-      setParadas(data)
-    } catch (err: unknown) {
+      let lastErr: unknown
+      for (let attempt = 0; attempt <= RETRY_ATTEMPTS; attempt++) {
+        try {
+          if (myId !== loadIdRef.current) {
+            // #region agent log
+            fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'skip stale before fetch',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+            // #endregion
+            return
+          }
+          const data = await getAllParadas()
+          if (myId !== loadIdRef.current) return
+          // #region agent log
+          fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'setParadas success',data:{myId,loadIdRefCurrent:loadIdRef.current,count:data?.length},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+          // #endregion
+          setParadas(data)
+          return
+        } catch (err) {
+          lastErr = err
+          const raw =
+            err instanceof Error
+              ? err.message
+              : (err as { message?: string })?.message ?? String(err)
+          const isNetworkError =
+            raw.includes('Failed to fetch') || raw.includes('NetworkError')
+          if (!isNetworkError || attempt === RETRY_ATTEMPTS) break
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+        }
+      }
+      if (myId !== loadIdRef.current) {
+        // #region agent log
+        fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'skip stale before setError',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
+        return
+      }
       const raw =
-        err instanceof Error
-          ? err.message
-          : (err as { message?: string })?.message ??
-            (err as { error_description?: string })?.error_description ??
-            String(err)
+        lastErr instanceof Error
+          ? lastErr.message
+          : (lastErr as { message?: string })?.message ??
+            (lastErr as { error_description?: string })?.error_description ??
+            String(lastErr)
       const isNetworkError =
         raw.includes('Failed to fetch') || raw.includes('NetworkError')
       const message = isNetworkError
         ? 'Sem conexão com o servidor. Verifique a internet, o VITE_SUPABASE_URL no .env e se o projeto Supabase está ativo.'
         : raw
+      // #region agent log
+      fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'setError called',data:{myId,loadIdRefCurrent:loadIdRef.current,raw:String(raw).slice(0,80),isNetworkError},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
       setError(message)
     } finally {
+      if (myId !== loadIdRef.current) {
+        // #region agent log
+        fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:loadParadas',message:'skip stale in finally',data:{myId,loadIdRefCurrent:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
+        return
+      }
       setLoading(false)
     }
   }
 
   useEffect(() => {
     loadParadas()
+    return () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7466/ingest/6b714781-4416-4ecd-a4f2-6934a572e0ab',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3b1951'},body:JSON.stringify({sessionId:'3b1951',location:'Paradas.tsx:useEffect',message:'effect cleanup',data:{loadIdRefBefore:loadIdRef.current},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
+      loadIdRef.current += 1
+    }
   }, [])
 
   const handleRowClick = (parada: Parada) => {
