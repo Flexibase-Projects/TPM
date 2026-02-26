@@ -23,8 +23,10 @@ import {
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { getParadasByMaquinario } from '../../services/paradaService'
+import { getMateriaisByMaquinario } from '../../services/materialService'
 import type { Maquinario } from '../../types/maquinario'
 import type { Parada } from '../../types/parada'
+import type { MaterialMaquinario } from '../../types/material'
 import { formatarHorasParaHHMM } from '../../utils/constants'
 
 interface MaquinarioDetailsDialogProps {
@@ -42,10 +44,13 @@ export const MaquinarioDetailsDialog = ({
 }: MaquinarioDetailsDialogProps) => {
   const [paradas, setParadas] = useState<Parada[]>([])
   const [loadingParadas, setLoadingParadas] = useState(false)
+  const [itensMaterial, setItensMaterial] = useState<MaterialMaquinario[]>([])
+  const [loadingItensMaterial, setLoadingItensMaterial] = useState(false)
 
   useEffect(() => {
     if (open && maquinario) {
       loadParadas()
+      loadItensMaterial()
     }
   }, [open, maquinario])
 
@@ -62,6 +67,23 @@ export const MaquinarioDetailsDialog = ({
       setLoadingParadas(false)
     }
   }
+
+  const loadItensMaterial = async () => {
+    if (!maquinario) return
+    setLoadingItensMaterial(true)
+    try {
+      const data = await getMateriaisByMaquinario(maquinario.id)
+      setItensMaterial(data)
+    } catch (err) {
+      console.error('Erro ao carregar materiais:', err)
+      setItensMaterial([])
+    } finally {
+      setLoadingItensMaterial(false)
+    }
+  }
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   if (!maquinario) return null
 
@@ -371,6 +393,104 @@ export const MaquinarioDetailsDialog = ({
               </Paper>
             </Grid>
           )}
+
+          {/* Custos e materiais */}
+          <Grid item xs={12}>
+            <Paper
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  mb: 1.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Custos e materiais
+              </Typography>
+              {loadingItensMaterial ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={20} />
+                </Box>
+              ) : itensMaterial.length > 0 ? (
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+                          Descrição
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+                          Marca
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+                          Valor unitário
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+                          Quantidade
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+                          Data da compra
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+                          Total
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {itensMaterial.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
+                            {item.descricao}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
+                            {item.marca || '-'}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
+                            {formatarMoeda(Number(item.valor_unitario))}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
+                            {Number(item.quantidade)}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
+                            {item.data_compra
+                              ? new Date(item.data_compra + 'T12:00:00').toLocaleDateString('pt-BR')
+                              : '-'}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
+                            {formatarMoeda(Number(item.valor_unitario) * Number(item.quantidade))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: '0.8125rem',
+                    color: 'text.secondary',
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    py: 2,
+                  }}
+                >
+                  Nenhum material registrado
+                </Typography>
+              )}
+            </Paper>
+          </Grid>
 
           {/* Últimas Paradas */}
           <Grid item xs={12}>

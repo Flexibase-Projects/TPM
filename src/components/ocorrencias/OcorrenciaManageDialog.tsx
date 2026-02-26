@@ -17,7 +17,16 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
 } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteIcon from '@mui/icons-material/Delete'
 import WarningIcon from '@mui/icons-material/Warning'
 import CloseIcon from '@mui/icons-material/Close'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -37,7 +46,13 @@ import {
   calcularTempos,
   atualizarCategoria 
 } from '../../services/ocorrenciaService'
+import { getMateriaisByMaquinario, saveMateriaisMaquinario } from '../../services/materialService'
+import type { MaterialMaquinarioFormItem } from '../../types/material'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs'
+import 'dayjs/locale/pt-br'
 
 interface OcorrenciaManageDialogProps {
   open: boolean
@@ -61,6 +76,9 @@ export const OcorrenciaManageDialog = ({
   const [responsavel, setResponsavel] = useState('')
   const [categoria, setCategoria] = useState<CategoriaOcorrencia | ''>('')
   const [loadingHistorico, setLoadingHistorico] = useState(false)
+  const [itensMaterialEdit, setItensMaterialEdit] = useState<MaterialMaquinarioFormItem[]>([])
+  const [loadingItensMaterial, setLoadingItensMaterial] = useState(false)
+  const [savingItensMaterial, setSavingItensMaterial] = useState(false)
   const [mostrarRetroceder, setMostrarRetroceder] = useState(false)
   const retrocederRef = useRef<HTMLDivElement>(null)
 
@@ -69,12 +87,14 @@ export const OcorrenciaManageDialog = ({
       setNovoStatus('')
       setComentario('')
       setMostrarRetroceder(false)
+      setItensMaterialEdit([])
       // Se status é novo e não tem responsável, deixar vazio para preencher
       // Caso contrário, usar o responsável atual ou vazio
       setResponsavel(ocorrencia.status === 'novo' ? '' : (ocorrencia.responsavel || ''))
       setCategoria(ocorrencia.categoria)
       loadHistorico()
       loadTempos()
+      loadItensMaterial()
     }
   }, [open, ocorrencia?.id, ocorrencia?.status])
 
@@ -90,6 +110,45 @@ export const OcorrenciaManageDialog = ({
       console.error('Erro ao carregar histórico:', err)
     } finally {
       setLoadingHistorico(false)
+    }
+  }
+
+  const loadItensMaterial = async () => {
+    if (!ocorrencia) return
+    setLoadingItensMaterial(true)
+    try {
+      const data = await getMateriaisByMaquinario(ocorrencia.maquinario_id)
+      setItensMaterialEdit(
+        data.map((m) => ({
+          descricao: m.descricao,
+          marca: m.marca ?? undefined,
+          valor_unitario: Number(m.valor_unitario),
+          quantidade: Number(m.quantidade),
+          unidade: m.unidade ?? undefined,
+          observacao: m.observacao ?? undefined,
+          data_compra: m.data_compra ?? undefined,
+        }))
+      )
+    } catch (err) {
+      console.error('Erro ao carregar materiais do maquinário:', err)
+      setItensMaterialEdit([])
+    } finally {
+      setLoadingItensMaterial(false)
+    }
+  }
+
+  const handleSalvarMateriais = async () => {
+    if (!ocorrencia) return
+    setSavingItensMaterial(true)
+    try {
+      await saveMateriaisMaquinario(ocorrencia.maquinario_id, itensMaterialEdit)
+      await loadItensMaterial()
+      onUpdate()
+    } catch (err) {
+      console.error('Erro ao salvar materiais:', err)
+      setError('Erro ao salvar custos e materiais. Tente novamente.')
+    } finally {
+      setSavingItensMaterial(false)
     }
   }
 
@@ -504,6 +563,183 @@ export const OcorrenciaManageDialog = ({
               </Paper>
             </Grid>
           )}
+
+          {/* Custos e materiais (editável) */}
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2, backgroundColor: 'background.default' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                  Custos e materiais
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() =>
+                      setItensMaterialEdit((prev) => [
+                        ...prev,
+                        {
+                          descricao: '',
+                          marca: undefined,
+                          valor_unitario: 0,
+                          quantidade: 1,
+                          unidade: undefined,
+                          observacao: undefined,
+                          data_compra: undefined,
+                        },
+                      ])
+                    }
+                    disabled={loadingItensMaterial}
+                  >
+                    Adicionar
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={handleSalvarMateriais}
+                    disabled={savingItensMaterial || loadingItensMaterial}
+                    startIcon={savingItensMaterial ? <CircularProgress size={16} color="inherit" /> : null}
+                  >
+                    {savingItensMaterial ? 'Salvando...' : 'Salvar materiais'}
+                  </Button>
+                </Box>
+              </Box>
+              {loadingItensMaterial ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={20} />
+                </Box>
+              ) : itensMaterialEdit.length > 0 ? (
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>Descrição</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>Marca</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>Valor unitário</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>Quantidade</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>Data da compra</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>Total</TableCell>
+                        <TableCell sx={{ width: 56 }} />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {itensMaterialEdit.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder="Descrição"
+                              value={item.descricao ?? ''}
+                              onChange={(e) => {
+                                const next = [...itensMaterialEdit]
+                                next[index] = { ...next[index], descricao: e.target.value }
+                                setItensMaterialEdit(next)
+                              }}
+                              sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder="Marca"
+                              value={item.marca ?? ''}
+                              onChange={(e) => {
+                                const next = [...itensMaterialEdit]
+                                next[index] = { ...next[index], marca: e.target.value || undefined }
+                                setItensMaterialEdit(next)
+                              }}
+                              sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              type="number"
+                              inputProps={{ min: 0, step: 0.01 }}
+                              value={item.valor_unitario ?? 0}
+                              onChange={(e) => {
+                                const next = [...itensMaterialEdit]
+                                next[index] = { ...next[index], valor_unitario: Number(e.target.value) || 0 }
+                                setItensMaterialEdit(next)
+                              }}
+                              sx={{ width: 110, '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              type="number"
+                              inputProps={{ min: 0.01, step: 0.01 }}
+                              value={item.quantidade ?? 1}
+                              onChange={(e) => {
+                                const next = [...itensMaterialEdit]
+                                next[index] = { ...next[index], quantidade: Number(e.target.value) || 0 }
+                                setItensMaterialEdit(next)
+                              }}
+                              sx={{ width: 90, '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+                              <DatePicker
+                                value={item.data_compra ? dayjs(item.data_compra, 'YYYY-MM-DD') : null}
+                                onChange={(date) => {
+                                  const next = [...itensMaterialEdit]
+                                  next[index] = {
+                                    ...next[index],
+                                    data_compra: date ? dayjs(date).format('YYYY-MM-DD') : undefined,
+                                  }
+                                  setItensMaterialEdit(next)
+                                }}
+                                format="DD/MM/YYYY"
+                                slotProps={{
+                                  textField: {
+                                    size: 'small',
+                                    placeholder: 'dd/mm/aaaa',
+                                    sx: { '& .MuiInputBase-input': { fontSize: '0.8125rem' }, minWidth: 130 },
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle', fontSize: '0.8125rem' }}>
+                            {(Number(item.valor_unitario) * Number(item.quantidade)).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => setItensMaterialEdit((prev) => prev.filter((_, i) => i !== index))}
+                              aria-label="Remover"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: '0.8125rem',
+                    color: 'text.secondary',
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    py: 2,
+                  }}
+                >
+                  Nenhum material registrado. Clique em &quot;Adicionar&quot; para incluir itens.
+                </Typography>
+              )}
+            </Paper>
+          </Grid>
 
           {/* Retroceder Chamado Concluído */}
           {ocorrencia.status === 'concluído' && mostrarRetroceder && (

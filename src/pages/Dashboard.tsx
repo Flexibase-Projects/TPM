@@ -32,6 +32,9 @@ import {
   CleaningServices,
   AssignmentTurnedIn,
   Assignment,
+  AttachMoney,
+  Category,
+  Inventory2,
 } from '@mui/icons-material'
 import {
   PieChart,
@@ -126,6 +129,9 @@ export const Dashboard = () => {
     if (horasRestantes === 0) return `${dias} dia${dias > 1 ? 's' : ''}`
     return `${dias} dia${dias > 1 ? 's' : ''} e ${horasRestantes}h`
   }
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   const taxaPreventiva =
     metrics.totalOcorrencias > 0
@@ -740,6 +746,216 @@ export const Dashboard = () => {
         </Grid>
       </Grid>
 
+      {/* CUSTOS E PEÇAS - KPI, Custo por Máquina, Custo por Setor, Top Peças */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Custos e Peças
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Indicadores de custo de manutenção e peças com maior giro
+          </Typography>
+        </Grid>
+        {/* KPI Custo de Manutenção Geral */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card
+            sx={{
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: theme.palette.mode === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Custo de Manutenção Geral
+                </Typography>
+                <AttachMoney sx={{ fontSize: 28, color: theme.palette.primary.main }} />
+              </Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 700, mb: 1 }}>
+                {formatarMoeda(metrics.custoManutencaoTotal)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total consolidado (itens por OM)
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Custo por Máquina - Tabela + Gráfico de barras horizontais */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+              <PrecisionManufacturing sx={{ fontSize: 24, color: theme.palette.primary.main }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Custo por Máquina
+              </Typography>
+            </Box>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={5}>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>Maquinário</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>Custo Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(metrics.custoPorMaquina || []).slice(0, 10).map((row, idx) => (
+                        <TableRow key={idx} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>{row.maquinario}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 500 }}>{formatarMoeda(row.custoTotal)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {(!metrics.custoPorMaquina || metrics.custoPorMaquina.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                    Nenhum custo registrado por máquina
+                  </Typography>
+                )}
+              </Grid>
+              <Grid item xs={12} md={7}>
+                {metrics.custoPorMaquina && metrics.custoPorMaquina.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                      data={metrics.custoPorMaquina.slice(0, 10).map((m) => ({ name: m.maquinario, valor: m.custoTotal }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} horizontal={false} />
+                      <XAxis type="number" tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} tickFormatter={(v) => formatarMoeda(v)} />
+                      <YAxis type="category" dataKey="name" width={75} tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} />
+                      <Tooltip formatter={(value: number) => [formatarMoeda(value), 'Custo']} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 8 }} />
+                      <Bar dataKey="valor" fill={theme.palette.primary.main} radius={[0, 4, 4, 0]} name="Custo" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
+                    <Typography variant="body2" color="text.secondary">Sem dados para exibir</Typography>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Custo por Setor - Tabela + Gráfico de rosca */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+              <Category sx={{ fontSize: 24, color: theme.palette.secondary.main }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Custo por Setor
+              </Typography>
+            </Box>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={5}>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>Setor</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>Custo Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(metrics.custoPorSetor || []).map((row, idx) => (
+                        <TableRow key={idx} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>{row.setor}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 500 }}>{formatarMoeda(row.custoTotal)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {(!metrics.custoPorSetor || metrics.custoPorSetor.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                    Nenhum custo por setor
+                  </Typography>
+                )}
+              </Grid>
+              <Grid item xs={12} md={7}>
+                {metrics.custoPorSetor && metrics.custoPorSetor.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Tooltip formatter={(value: number) => [formatarMoeda(value), 'Custo']} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 8 }} />
+                      <Pie
+                        data={metrics.custoPorSetor.map((s, i) => ({
+                          name: s.setor,
+                          value: s.custoTotal,
+                          color: [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.success.main, theme.palette.warning.main, theme.palette.info.main][i % 5],
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {metrics.custoPorSetor.map((_, index) => {
+                          const colors = [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.success.main, theme.palette.warning.main, theme.palette.info.main]
+                          return <Cell key={index} fill={colors[index % colors.length]} stroke={theme.palette.background.paper} strokeWidth={2} />
+                        })}
+                      </Pie>
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
+                    <Typography variant="body2" color="text.secondary">Sem dados para exibir</Typography>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Top Peças - Tabela */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+              <Inventory2 sx={{ fontSize: 24, color: theme.palette.info.main }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Peças com maior giro e impacto financeiro (Top 15)
+              </Typography>
+            </Box>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Descrição</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Marca</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Valor Total</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(metrics.topPecas || []).map((row, idx) => (
+                    <TableRow key={idx} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>{row.descricao}</TableCell>
+                      <TableCell>{row.marca ?? '-'}</TableCell>
+                      <TableCell align="right">{row.quantidadeTotal.toLocaleString('pt-BR')}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>{formatarMoeda(row.valorTotal)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {(!metrics.topPecas || metrics.topPecas.length === 0) && (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                Nenhuma peça registrada em OMs
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+
       {/* 5. QUINTA LINHA - Score de Problemas dos Maquinários */}
       {metrics.scoreProblemasMaquinarios && metrics.scoreProblemasMaquinarios.length > 0 && (
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -749,7 +965,7 @@ export const Dashboard = () => {
                 Score de Problemas dos Maquinários
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Análise combinada de paradas e ocorrências para identificar maquinários que requerem atenção ou substituição
+                Análise combinada de paradas, ocorrências e custo de manutenção. Equipamentos com custos elevados perdem pontos no ranking de eficiência.
               </Typography>
               <TableContainer>
                 <Table>
@@ -770,6 +986,9 @@ export const Dashboard = () => {
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         OMs Abertas
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        Custo Manutenção
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 600 }}>
                         Categoria
@@ -831,6 +1050,9 @@ export const Dashboard = () => {
                                 {item.ocorrenciasAbertas}
                               </Typography>
                             )}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 500 }}>
+                            {formatarMoeda(item.custoManutencao ?? 0)}
                           </TableCell>
                           <TableCell align="center">
                             <Chip

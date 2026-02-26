@@ -18,17 +18,29 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs'
+import 'dayjs/locale/pt-br'
 import { AreasManager } from './AreasManager'
 import { MotivosParadaManager } from './MotivosParadaManager'
 import { ChecklistManager } from './ChecklistManager'
 import { createMaquinario, updateMaquinario, getAreas, uploadImagemMaquinario, getImagemDisplayUrl } from '../../services/maquinarioService'
 import { createParadaAutomaticaDesativacao } from '../../services/paradaService'
+import { getMateriaisByMaquinario, saveMateriaisMaquinario } from '../../services/materialService'
 import type { Maquinario, MaquinarioFormData, Area, StatusMaquinario } from '../../types/maquinario'
+import type { MaterialMaquinarioFormItem } from '../../types/material'
 
 const MAX_IMAGE_SIZE_MB = 5
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -65,6 +77,7 @@ export const MaquinarioFormDialog = ({
   })
   const [imagemFile, setImagemFile] = useState<File | null>(null)
   const [imagemPreviewUrl, setImagemPreviewUrl] = useState<string | null>(null)
+  const [materiaisMaquinario, setMateriaisMaquinario] = useState<MaterialMaquinarioFormItem[]>([])
 
   useEffect(() => {
     if (open) {
@@ -91,6 +104,7 @@ export const MaquinarioFormDialog = ({
             ordem: item.ordem,
           })) || [],
         })
+        loadMateriaisMaquinario(maquinario.id)
       } else {
         setFormData({
           identificacao: '',
@@ -106,9 +120,28 @@ export const MaquinarioFormDialog = ({
           motivos_parada: [],
           checklist_itens: [],
         })
+        setMateriaisMaquinario([])
       }
     }
   }, [open, maquinario])
+
+  const loadMateriaisMaquinario = async (maquinarioId: string) => {
+    try {
+      const data = await getMateriaisByMaquinario(maquinarioId)
+      setMateriaisMaquinario(data.map(m => ({
+        descricao: m.descricao,
+        marca: m.marca ?? undefined,
+        valor_unitario: Number(m.valor_unitario),
+        quantidade: Number(m.quantidade),
+        unidade: m.unidade ?? undefined,
+        observacao: m.observacao ?? undefined,
+        data_compra: m.data_compra ?? undefined,
+      })))
+    } catch (err) {
+      console.error('Erro ao carregar materiais do maquinário:', err)
+      setMateriaisMaquinario([])
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -159,7 +192,7 @@ export const MaquinarioFormDialog = ({
     try {
       setLoading(true)
       setError(null)
-      // Imagem selecionada é sempre direcionada ao bucket de maquinários e à coluna imagem_url da tabela de maquinários, para aparecer na listagem ao acessar.
+      let maquinarioId: string
       if (maquinario) {
         let payload: MaquinarioFormData = { ...formData }
         if (imagemFile) {
@@ -167,6 +200,7 @@ export const MaquinarioFormDialog = ({
           payload = { ...formData, imagem_url: url }
         }
         await updateMaquinario(maquinario.id, payload)
+        maquinarioId = maquinario.id
         if (payload.status_maquinario === 'Desativada') {
           try {
             await createParadaAutomaticaDesativacao(maquinario.id)
@@ -176,6 +210,7 @@ export const MaquinarioFormDialog = ({
         }
       } else {
         const created = await createMaquinario({ ...formData, imagem_url: imagemFile ? null : formData.imagem_url ?? null })
+        maquinarioId = created.id
         if (imagemFile) {
           const url = await uploadImagemMaquinario(created.id, imagemFile)
           await updateMaquinario(created.id, { ...formData, imagem_url: url })
@@ -188,10 +223,24 @@ export const MaquinarioFormDialog = ({
           }
         }
       }
+      const itensValidos = materiaisMaquinario.filter(
+        (m) => (m.descricao ?? '').trim() !== '' && Number(m.quantidade) > 0 && Number(m.valor_unitario) >= 0
+      )
+      try {
+        await saveMateriaisMaquinario(maquinarioId, itensValidos)
+      } catch (errMaterial) {
+        const msg = (errMaterial as { message?: string })?.message ?? (errMaterial instanceof Error ? errMaterial.message : String(errMaterial))
+        const hint = msg.includes('does not exist') || msg.includes('não existe')
+          ? ' Execute a migration 026_create_materiais_maquinario.sql no Supabase (SQL Editor).'
+          : ''
+        setError(`Erro ao salvar custos e materiais: ${msg}.${hint}`)
+        setLoading(false)
+        return
+      }
       await onSubmit()
     } catch (error) {
       console.error('Erro ao salvar maquinário:', error)
-      const rawMessage = error instanceof Error ? error.message : 'Erro ao salvar maquinário. Verifique os dados e tente novamente.'
+      const rawMessage = (error as { message?: string })?.message ?? (error instanceof Error ? error.message : 'Erro ao salvar maquinário. Verifique os dados e tente novamente.')
       const errorMessage =
         rawMessage === 'Failed to fetch'
           ? 'Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL no .env e se o servidor está acessível.'
@@ -572,9 +621,10 @@ export const MaquinarioFormDialog = ({
                 <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
                   Checklist de Limpeza (Limpeza semanal)
                 </Typography>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
                   <DatePicker
                     label="Próxima limpeza em"
+                    format="DD/MM/YYYY"
                     value={formData.proxima_limpeza_em ? dayjs(formData.proxima_limpeza_em) : null}
                     onChange={(d) =>
                       setFormData({
@@ -643,6 +693,157 @@ export const MaquinarioFormDialog = ({
                   }
                   tipoFilter="Manutenção"
                 />
+              </Paper>
+            </Grid>
+
+            {/* Seção: Custos e materiais */}
+            <Grid item xs={12}>
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                  Custos e materiais
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                  <Button
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() =>
+                      setMateriaisMaquinario((prev) => [
+                        ...prev,
+                        {
+                          descricao: '',
+                          marca: undefined,
+                          valor_unitario: 0,
+                          quantidade: 1,
+                          unidade: undefined,
+                          observacao: undefined,
+                          data_compra: undefined,
+                        },
+                      ])
+                    }
+                  >
+                    Adicionar
+                  </Button>
+                </Box>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Descrição</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Marca</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Valor unitário</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Quantidade</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Data da compra</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Total</TableCell>
+                        <TableCell sx={{ width: 56 }} />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {materiaisMaquinario.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder="Descrição"
+                              value={item.descricao ?? ''}
+                              onChange={(e) => {
+                                const next = [...materiaisMaquinario]
+                                next[index] = { ...next[index], descricao: e.target.value }
+                                setMateriaisMaquinario(next)
+                              }}
+                              sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder="Marca"
+                              value={item.marca ?? ''}
+                              onChange={(e) => {
+                                const next = [...materiaisMaquinario]
+                                next[index] = { ...next[index], marca: e.target.value || undefined }
+                                setMateriaisMaquinario(next)
+                              }}
+                              sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              type="number"
+                              inputProps={{ min: 0, step: 0.01 }}
+                              value={item.valor_unitario ?? 0}
+                              onChange={(e) => {
+                                const next = [...materiaisMaquinario]
+                                next[index] = { ...next[index], valor_unitario: Number(e.target.value) || 0 }
+                                setMateriaisMaquinario(next)
+                              }}
+                              sx={{ width: 110, '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <TextField
+                              size="small"
+                              type="number"
+                              inputProps={{ min: 0.01, step: 0.01 }}
+                              value={item.quantidade ?? 1}
+                              onChange={(e) => {
+                                const next = [...materiaisMaquinario]
+                                next[index] = { ...next[index], quantidade: Number(e.target.value) || 0 }
+                                setMateriaisMaquinario(next)
+                              }}
+                              sx={{ width: 90, '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+                              <DatePicker
+                                value={item.data_compra ? dayjs(item.data_compra, 'YYYY-MM-DD') : null}
+                                onChange={(date) => {
+                                  const next = [...materiaisMaquinario]
+                                  next[index] = {
+                                    ...next[index],
+                                    data_compra: date ? dayjs(date).format('YYYY-MM-DD') : undefined,
+                                  }
+                                  setMateriaisMaquinario(next)
+                                }}
+                                format="DD/MM/YYYY"
+                                slotProps={{
+                                  textField: {
+                                    size: 'small',
+                                    placeholder: 'dd/mm/aaaa',
+                                    sx: { '& .MuiInputBase-input': { fontSize: '0.8125rem' }, minWidth: 130 },
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle', fontSize: '0.8125rem' }}>
+                            {(Number(item.valor_unitario) * Number(item.quantidade)).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </TableCell>
+                          <TableCell sx={{ py: 0.5, verticalAlign: 'middle' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => setMateriaisMaquinario((prev) => prev.filter((_, i) => i !== index))}
+                              aria-label="Remover"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {materiaisMaquinario.length === 0 && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                    Nenhum material. Clique em Adicionar para incluir peças e custos.
+                  </Typography>
+                )}
               </Paper>
             </Grid>
           </Grid>

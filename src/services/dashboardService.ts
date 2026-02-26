@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import { getMaquinarios } from './maquinarioService'
 import { getOcorrencias } from './ocorrenciaService'
 import { getAllParadas } from './paradaService'
+import { getAllItensMaterialParaRelatorio } from './materialService'
 import type { Maquinario } from '../types/maquinario'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
 export interface DashboardMetrics {
@@ -58,7 +59,23 @@ export interface DashboardMetrics {
     horasParadas: number
     totalOcorrencias: number
     ocorrenciasAbertas: number
+    custoManutencao: number
     categoria: 'Crítica' | 'Normal'
+  }>
+  custoManutencaoTotal: number
+  custoPorMaquina: Array<{
+    maquinario: string
+    custoTotal: number
+  }>
+  custoPorSetor: Array<{
+    setor: string
+    custoTotal: number
+  }>
+  topPecas: Array<{
+    descricao: string
+    marca: string | null
+    quantidadeTotal: number
+    valorTotal: number
   }>
   totalChecklistsManutencao: number
   totalRotinasLimpeza: number
@@ -89,11 +106,12 @@ const calcularStatusMaquinario = (
  * Calcula métricas do dashboard
  */
 export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
-  // Buscar todos os dados
-  const [maquinarios, ocorrencias, paradas] = await Promise.all([
+  // Buscar todos os dados (incluindo itens de material para custos)
+  const [maquinarios, ocorrencias, paradas, itensMaterial] = await Promise.all([
     getMaquinarios(),
     getOcorrencias(),
     getAllParadas(),
+    getAllItensMaterialParaRelatorio().catch(() => []),
   ])
 
   // Separar ocorrências abertas e fechadas
@@ -326,12 +344,44 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
     })
     .sort((a, b) => b.totalOcorrencias - a.totalOcorrencias)
 
-  // Score de problemas dos maquinários (combinação de paradas e ocorrências)
+  // Agregações de custo (itens de material por ocorrência)
+  const custoPorMaquinaMap = new Map<string, { maquinario: string; custoTotal: number }>()
+  const custoPorSetorMap = new Map<string, number>()
+  let custoManutencaoTotal = 0
+  const pecasMap = new Map<string, { descricao: string; marca: string | null; quantidadeTotal: number; valorTotal: number }>()
+
+  itensMaterial.forEach((item) => {
+    custoManutencaoTotal += item.valor_total
+    const keyMaq = item.maquinario_id
+    const atualMaq = custoPorMaquinaMap.get(keyMaq) ?? { maquinario: item.maquinario_identificacao, custoTotal: 0 }
+    custoPorMaquinaMap.set(keyMaq, { ...atualMaq, custoTotal: atualMaq.custoTotal + item.valor_total })
+    const setorNome = item.area_nome ?? 'Sem setor'
+    custoPorSetorMap.set(setorNome, (custoPorSetorMap.get(setorNome) ?? 0) + item.valor_total)
+    const keyPeca = `${item.descricao}|${item.marca ?? ''}`
+    const atualPeca = pecasMap.get(keyPeca) ?? { descricao: item.descricao, marca: item.marca ?? null, quantidadeTotal: 0, valorTotal: 0 }
+    pecasMap.set(keyPeca, {
+      ...atualPeca,
+      quantidadeTotal: atualPeca.quantidadeTotal + item.quantidade,
+      valorTotal: atualPeca.valorTotal + item.valor_total,
+    })
+  })
+
+  const custoPorMaquina = Array.from(custoPorMaquinaMap.values())
+    .sort((a, b) => b.custoTotal - a.custoTotal)
+  const custoPorSetor = Array.from(custoPorSetorMap.entries())
+    .map(([setor, custoTotal]) => ({ setor, custoTotal }))
+    .sort((a, b) => b.custoTotal - a.custoTotal)
+  const topPecas = Array.from(pecasMap.values())
+    .sort((a, b) => b.valorTotal - a.valorTotal)
+    .slice(0, 15)
+
+  // Score de problemas dos maquinários (combinação de paradas, ocorrências e custo de manutenção)
   const scoreProblemasMap = new Map<string, {
     totalParadas: number
     horasParadas: number
     totalOcorrencias: number
     ocorrenciasAbertas: number
+    custoManutencao: number
     categoria: 'Crítica' | 'Normal'
   }>()
 
@@ -345,6 +395,7 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
       horasParadas: 0,
       totalOcorrencias: 0,
       ocorrenciasAbertas: 0,
+      custoManutencao: 0,
       categoria: maquinario?.categoria || 'Normal',
     }
     
@@ -366,6 +417,7 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
       horasParadas: 0,
       totalOcorrencias: 0,
       ocorrenciasAbertas: 0,
+      custoManutencao: 0,
       categoria: maquinario?.categoria || 'Normal',
     }
     
@@ -377,20 +429,43 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
     })
   })
 
-  // Calcular score: peso maior para horas paradas e ocorrências abertas
+  // Adicionar custo de manutenção por maquinário ao mapa de score
+  itensMaterial.forEach((item) => {
+    const maquinarioId = item.maquinario_id
+    const maquinario = maquinarios.find((m) => m.id === maquinarioId)
+    const atual = scoreProblemasMap.get(maquinarioId) || {
+      totalParadas: 0,
+      horasParadas: 0,
+      totalOcorrencias: 0,
+      ocorrenciasAbertas: 0,
+      custoManutencao: 0,
+      categoria: maquinario?.categoria || 'Normal',
+    }
+    scoreProblemasMap.set(maquinarioId, {
+      ...atual,
+      custoManutencao: atual.custoManutencao + item.valor_total,
+      categoria: maquinario?.categoria || 'Normal',
+    })
+  })
+
+  // Calcular score: paradas, ocorrências, ocorrências abertas e custo de manutenção (equipamentos com custo elevado perdem pontos)
+  const maxCusto = Math.max(1, ...Array.from(scoreProblemasMap.values()).map((d) => d.custoManutencao))
   const scoreProblemasMaquinarios = Array.from(scoreProblemasMap.entries())
     .map(([id, dados]) => {
       const maquinario = maquinarios.find((m) => m.id === id)
-      
-      // Score = (horas paradas * 2) + (total ocorrências * 3) + (ocorrências abertas * 5)
-      // Maquinários críticos têm peso adicional
       const pesoCategoria = dados.categoria === 'Crítica' ? 1.5 : 1
-      const score = ((dados.horasParadas * 2) + (dados.totalOcorrencias * 3) + (dados.ocorrenciasAbertas * 5)) * pesoCategoria
+      const custoNorm = (dados.custoManutencao / maxCusto) * 10
+      const score = ((dados.horasParadas * 2) + (dados.totalOcorrencias * 3) + (dados.ocorrenciasAbertas * 5) + custoNorm) * pesoCategoria
       
       return {
         maquinario: maquinario?.identificacao || id,
-        score: Math.round(score * 10) / 10, // Arredondar para 1 casa decimal
-        ...dados,
+        score: Math.round(score * 10) / 10,
+        totalParadas: dados.totalParadas,
+        horasParadas: dados.horasParadas,
+        totalOcorrencias: dados.totalOcorrencias,
+        ocorrenciasAbertas: dados.ocorrenciasAbertas,
+        custoManutencao: dados.custoManutencao,
+        categoria: dados.categoria,
       }
     })
     .sort((a, b) => b.score - a.score)
@@ -444,6 +519,10 @@ export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
     ocorrenciasPorMes,
     desempenhoFuncionarios,
     scoreProblemasMaquinarios,
+    custoManutencaoTotal,
+    custoPorMaquina,
+    custoPorSetor,
+    topPecas,
     totalChecklistsManutencao,
     totalRotinasLimpeza,
     maquinariosComChecklistManutencao,

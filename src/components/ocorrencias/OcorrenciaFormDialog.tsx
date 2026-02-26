@@ -535,7 +535,6 @@ export const OcorrenciaFormDialog = ({
               </Grid>
               </Grid>
             </LocalizationProvider>
-            )
           )}
         </Box>
       </DialogContent>
