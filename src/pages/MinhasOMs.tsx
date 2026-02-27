@@ -11,6 +11,7 @@ import { OcorrenciasList } from '../components/ocorrencias/OcorrenciasList'
 import { OcorrenciaManageDialog } from '../components/ocorrencias/OcorrenciaManageDialog'
 import { OcorrenciasFiltersComponent, type OcorrenciasFilters } from '../components/ocorrencias/OcorrenciasFilters'
 import { getOcorrencias, deleteOcorrencia, calcularTempos } from '../services/ocorrenciaService'
+import { usePermissions } from '../contexts/PermissionsContext'
 import { ROWS_PER_PAGE } from '../utils/constants'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
 
@@ -22,6 +23,7 @@ const getCurrentUser = (): string => {
 }
 
 export const MinhasOMs = () => {
+  const { canDeleteOM } = usePermissions()
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaManutencao[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -232,7 +234,7 @@ export const MinhasOMs = () => {
         <OcorrenciasList
           ocorrencias={paginatedOcorrencias}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={canDeleteOM ? handleDelete : undefined}
           onRowClick={handleRowClick}
         />
         <TablePagination

@@ -30,7 +30,7 @@ const formatHoras = (horas: number | undefined) => {
 interface OcorrenciasListProps {
   ocorrencias: OcorrenciaManutencao[]
   onEdit: (ocorrencia: OcorrenciaManutencao) => void
-  onDelete: (id: string) => void
+  onDelete?: (id: string) => void
   onRowClick?: (ocorrencia: OcorrenciaManutencao) => void
 }
 
@@ -65,7 +65,7 @@ export const OcorrenciasList = ({
   }
 
   const handleDelete = () => {
-    if (selectedOcorrencia) {
+    if (selectedOcorrencia && onDelete) {
       onDelete(selectedOcorrencia.id)
     }
     handleMenuClose()
@@ -249,12 +249,14 @@ export const OcorrenciasList = ({
           </ListItemIcon>
           <ListItemText>Editar</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleDelete}>
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Excluir</ListItemText>
-        </MenuItem>
+        {onDelete && (
+          <MenuItem onClick={handleDelete}>
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Excluir</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
     </>
   )

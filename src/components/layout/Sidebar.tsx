@@ -13,6 +13,8 @@ import {
   useMediaQuery,
   Box,
   Divider,
+  Button,
+  CircularProgress,
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -25,8 +27,12 @@ import LightModeIcon from '@mui/icons-material/LightMode'
 import HelpIcon from '@mui/icons-material/Help'
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import { useThemeMode } from '../../contexts/ThemeContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { usePermissions } from '../../contexts/PermissionsContext'
 import PersonIcon from '@mui/icons-material/Person'
 import DashboardIcon from '@mui/icons-material/Dashboard'
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import { GearLogo } from './GearLogo'
 
 export const drawerWidthExpanded = 240
@@ -43,6 +49,16 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { mode, toggleTheme } = useThemeMode()
+  const { user, signOut } = useAuth()
+  const {
+    canAccessDashboard,
+    canAccessAdmin,
+    canManageOM,
+    canAccessMaquinarios,
+    canAccessParadas,
+    refetchRole,
+    loading: permissionsLoading,
+  } = usePermissions()
 
   const drawerContent = (
     <Box
@@ -149,7 +165,8 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           px: open ? 2 : 0,
         }}
       >
-        {/* Dashboard */}
+        {/* Dashboard - apenas Gerente e Admin */}
+        {canAccessDashboard && (
         <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/')}
@@ -231,6 +248,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
             )}
           </ListItemButton>
         </ListItem>
+        )}
 
         {/* Seção de Perfil - MINHAS OM's */}
         <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
@@ -418,6 +436,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </ListItemButton>
         </ListItem>
         
+        {canManageOM && (
         <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/visualizar-om')}
@@ -498,7 +517,9 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
             )}
           </ListItemButton>
         </ListItem>
+        )}
         
+        {canAccessMaquinarios && (
         <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/maquinarios')}
@@ -579,7 +600,9 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
             )}
           </ListItemButton>
         </ListItem>
+        )}
         
+        {canAccessParadas && (
         <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/paradas')}
@@ -660,6 +683,56 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
             )}
           </ListItemButton>
         </ListItem>
+        )}
+
+        {/* Painel Administrativo - Gerente e Admin */}
+        {canAccessAdmin && (
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+          <ListItemButton
+            onClick={() => navigate('/admin/permissoes')}
+            selected={location.pathname === '/admin/permissoes'}
+            sx={{
+              minHeight: 40,
+              justifyContent: open ? 'initial' : 'center',
+              px: open ? 2 : 0,
+              py: open ? 0 : 0.5,
+              backgroundColor: location.pathname === '/admin/permissoes' ? (open ? '#e3f2fd' : 'transparent') : 'transparent',
+              color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary',
+              '&:hover': {
+                backgroundColor: open ? (location.pathname === '/admin/permissoes' ? '#e3f2fd' : 'action.hover') : 'transparent',
+              },
+              borderRadius: 2,
+              fontSize: '0.875rem',
+              position: 'relative',
+              ...(open && {
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  backgroundColor: location.pathname === '/admin/permissoes' ? 'primary.main' : 'transparent',
+                },
+              }),
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: open ? 'flex-start' : 'center', width: open ? 'auto' : 40, height: 40, borderRadius: 2, boxSizing: 'content-box' }}>
+              <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 0, justifyContent: 'center', color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary', '& svg': { fontSize: '1.25rem' } }}>
+                <AdminPanelSettingsIcon />
+              </ListItemIcon>
+            </Box>
+            {open && (
+              <ListItemText
+                primary="Painel Administrativo"
+                sx={{ '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 500, color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary' } }}
+              />
+            )}
+          </ListItemButton>
+        </ListItem>
+        )}
 
       </List>
       
@@ -727,6 +800,44 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </ListItemButton>
         </ListItem>
 
+        {open && user?.email && (
+          <>
+            <Typography
+              variant="caption"
+              sx={{
+                px: 2,
+                py: 0.5,
+                display: 'block',
+                color: 'text.secondary',
+                fontSize: '0.75rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {user.email}
+            </Typography>
+            <Button
+              size="small"
+              startIcon={permissionsLoading ? <CircularProgress size={14} color="inherit" /> : <RefreshIcon />}
+              onClick={() => refetchRole()}
+              disabled={permissionsLoading}
+              sx={{
+                mt: 0.5,
+                px: 2,
+                fontSize: '0.7rem',
+                color: 'text.secondary',
+                textTransform: 'none',
+                minHeight: 0,
+                py: 0.25,
+                '&:hover': { backgroundColor: 'action.hover', color: 'primary.main' },
+              }}
+            >
+              Atualizar permissões
+            </Button>
+          </>
+        )}
+
         <Divider sx={{ my: 1, mx: open ? 2 : 1 }} />
 
         {/* Ajuda */}
@@ -793,6 +904,10 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         {/* Sair */}
         <ListItem disablePadding sx={{ display: 'block' }}>
           <ListItemButton
+            onClick={async () => {
+              await signOut()
+              navigate('/login', { replace: true })
+            }}
             sx={{
               minHeight: 40,
               justifyContent: open ? 'initial' : 'center',
@@ -801,12 +916,10 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               borderRadius: 2,
               fontSize: '0.875rem',
               color: 'text.secondary',
-              '&.Mui-disabled': {
-                color: 'text.secondary',
-                opacity: 1,
+              '&:hover': {
+                backgroundColor: 'action.hover',
               },
             }}
-            disabled
           >
             <Box
               sx={{

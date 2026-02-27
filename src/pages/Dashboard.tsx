@@ -831,7 +831,7 @@ export const Dashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} horizontal={false} />
                       <XAxis type="number" tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} tickFormatter={(v) => formatarMoeda(v)} />
                       <YAxis type="category" dataKey="name" width={75} tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} />
-                      <Tooltip formatter={(value: number) => [formatarMoeda(value), 'Custo']} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 8 }} />
+                      <Tooltip formatter={(value: number | undefined) => [formatarMoeda(value ?? 0), 'Custo']} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 8 }} />
                       <Bar dataKey="valor" fill={theme.palette.primary.main} radius={[0, 4, 4, 0]} name="Custo" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -884,7 +884,7 @@ export const Dashboard = () => {
                 {metrics.custoPorSetor && metrics.custoPorSetor.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
-                      <Tooltip formatter={(value: number) => [formatarMoeda(value), 'Custo']} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 8 }} />
+                      <Tooltip formatter={(value: number | undefined) => [formatarMoeda(value ?? 0), 'Custo']} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 8 }} />
                       <Pie
                         data={metrics.custoPorSetor.map((s, i) => ({
                           name: s.setor,

@@ -24,6 +24,7 @@ import { OcorrenciaManageDialog } from '../components/ocorrencias/OcorrenciaMana
 import { OcorrenciasFiltersComponent, type OcorrenciasFilters } from '../components/ocorrencias/OcorrenciasFilters'
 import { getOcorrencias, deleteOcorrencia, calcularTempos } from '../services/ocorrenciaService'
 import { getProximasManutencoesLimpezas, type ItemProximoVencimento } from '../services/manutencaoPreventivaService'
+import { usePermissions } from '../contexts/PermissionsContext'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
@@ -48,6 +49,7 @@ const bellPulse = keyframes`
 
 export const VisualizarOM = () => {
   const navigate = useNavigate()
+  const { canDeleteOM } = usePermissions()
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaManutencao[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -471,7 +473,7 @@ export const VisualizarOM = () => {
           <OcorrenciasList
             ocorrencias={paginatedOcorrencias}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={canDeleteOM ? handleDelete : undefined}
             onRowClick={handleRowClick}
           />
           <TablePagination
