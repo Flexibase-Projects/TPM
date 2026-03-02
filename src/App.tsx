@@ -34,19 +34,61 @@ function LoginRoute() {
   return <Login />
 }
 
-function PublicOcorrenciasRoute() {
+/** Abrir OM: com sidebar se logado, layout público se anônimo. */
+function OcorrenciasRoute() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.default' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (!user) {
+    return (
+      <LayoutPublic>
+        <OcorrenciasManutencao />
+      </LayoutPublic>
+    )
+  }
+
   return (
-    <LayoutPublic>
-      <OcorrenciasManutencao />
-    </LayoutPublic>
+    <PermissionsProvider>
+      <Layout>
+        <OcorrenciasManutencao />
+      </Layout>
+    </PermissionsProvider>
   )
 }
 
-function PublicBuscarOMRoute() {
+/** Buscar OM: com sidebar se logado, layout público se anônimo. */
+function BuscarOMRoute() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.default' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (!user) {
+    return (
+      <LayoutPublic>
+        <BuscarOM />
+      </LayoutPublic>
+    )
+  }
+
   return (
-    <LayoutPublic>
-      <BuscarOM />
-    </LayoutPublic>
+    <PermissionsProvider>
+      <Layout>
+        <BuscarOM />
+      </Layout>
+    </PermissionsProvider>
   )
 }
 
@@ -131,8 +173,8 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
-            <Route path="/ocorrencias" element={<PublicOcorrenciasRoute />} />
-            <Route path="/buscar-om" element={<PublicBuscarOMRoute />} />
+            <Route path="/ocorrencias" element={<OcorrenciasRoute />} />
+            <Route path="/buscar-om" element={<BuscarOMRoute />} />
             <Route path="/*" element={<ProtectedAppRoutes />} />
           </Routes>
         </BrowserRouter>

@@ -1,21 +1,28 @@
 import { supabase } from './supabase'
 import type { TPM_role, AuthUserListItem, UserRoleRow } from '../types/permissions'
 
+const VALID_ROLES: TPM_role[] = ['usuario', 'equipe_manutencao', 'gerente_manutencao', 'administrador']
+
+function isValidRole(value: unknown): value is TPM_role {
+  return typeof value === 'string' && VALID_ROLES.includes(value as TPM_role)
+}
+
 /**
- * Retorna a role do usuário logado (auth.uid()). Null se não logado ou sem registro.
+ * Retorna a role do usuário logado via RPC (não depende de RLS). Null se não logado.
  */
 export const getMyRole = async (): Promise<TPM_role | null> => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data, error } = await supabase
-    .from('TPM_user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('TPM_get_my_role')
 
-  if (error) throw error
-  return (data?.role as TPM_role) ?? 'usuario'
+  if (error) {
+    console.error('getMyRole falhou:', error)
+    return 'usuario'
+  }
+
+  if (isValidRole(data)) return data
+  return 'usuario'
 }
 
 /**

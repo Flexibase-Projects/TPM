@@ -50,7 +50,8 @@ export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
     try {
       const r = await getMyRole()
       setRole(r)
-    } catch {
+    } catch (err) {
+      console.error('getMyRole falhou', err)
       setRole(null)
     } finally {
       setLoading(false)
@@ -72,7 +73,8 @@ export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
         .then((r) => {
           if (!cancelled) setRole(r)
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('getMyRole falhou', err)
           if (cancelled) return
           willRetry = true
           // Retry uma vez após delay (sessão pode demorar a propagar após login)
@@ -82,7 +84,8 @@ export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
               .then((r) => {
                 if (!cancelled) setRole(r)
               })
-              .catch(() => {
+              .catch((retryErr) => {
+                console.error('getMyRole falhou no retry', retryErr)
                 if (!cancelled) setRole(null)
               })
               .finally(() => {
