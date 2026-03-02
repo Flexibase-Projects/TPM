@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Drawer,
@@ -41,11 +42,15 @@ export const drawerWidthCollapsed = 64
 interface SidebarProps {
   open: boolean
   onToggle: () => void
+  mobileDrawerOpen?: boolean
+  onMobileDrawerClose?: () => void
+  isMobile?: boolean
 }
 
-export const Sidebar = ({ open, onToggle }: SidebarProps) => {
+export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDrawerClose, isMobile: isMobileProp }: SidebarProps) => {
   const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobileQuery = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = isMobileProp ?? isMobileQuery
   const navigate = useNavigate()
   const location = useLocation()
   const { mode, toggleTheme } = useThemeMode()
@@ -59,6 +64,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
     refetchRole,
     loading: permissionsLoading,
   } = usePermissions()
+
+  const effectiveOpen = isMobile && mobileDrawerOpen ? true : open
+  const prevPathnameRef = useRef(location.pathname)
+
+  useEffect(() => {
+    if (!isMobile) return
+    const prev = prevPathnameRef.current
+    prevPathnameRef.current = location.pathname
+    if (prev !== location.pathname) {
+      onMobileDrawerClose?.()
+    }
+  }, [location.pathname, isMobile, onMobileDrawerClose])
 
   const drawerContent = (
     <Box
@@ -74,7 +91,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'flex-start',
-          px: open ? 2 : 1,
+          px: effectiveOpen ? 2 : 1,
           py: 2,
           minHeight: { xs: 56, sm: 64 },
           gap: 1,
@@ -84,7 +101,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: open ? 'space-between' : 'center',
+            justifyContent: effectiveOpen ? 'space-between' : 'center',
             width: '100%',
           }}
         >
@@ -101,15 +118,15 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               aria-label="Início"
               sx={{
                 color: 'primary.main',
-                p: open ? 1.5 : 1,
+                p: effectiveOpen ? 1.5 : 1,
                 '&:hover': {
                   backgroundColor: 'action.hover',
                 },
               }}
             >
-              <GearLogo size={open ? 40 : 28} color="currentColor" />
+              <GearLogo size={effectiveOpen ? 40 : 28} color="currentColor" />
             </IconButton>
-            {open && (
+            {effectiveOpen && (
               <Typography
                 component="span"
                 variant="h6"
@@ -124,9 +141,9 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               </Typography>
             )}
           </Box>
-          {open && (
+          {effectiveOpen && (
             <IconButton 
-              onClick={onToggle}
+              onClick={isMobile ? onMobileDrawerClose : onToggle}
               size="small"
               sx={{
                 ml: 'auto',
@@ -142,10 +159,10 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         </Box>
       </Toolbar>
       <Divider />
-      {!open && (
+      {!effectiveOpen && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
           <IconButton 
-            onClick={onToggle}
+            onClick={isMobile ? onMobileDrawerClose : onToggle}
             size="small"
           >
             {theme.direction === 'rtl' ? (
@@ -156,44 +173,44 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </IconButton>
         </Box>
       )}
-      {!open && <Divider />}
+      {!effectiveOpen && <Divider />}
       <List
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: open ? 'stretch' : 'center',
-          px: open ? 2 : 0,
+          alignItems: effectiveOpen ? 'stretch' : 'center',
+          px: effectiveOpen ? 2 : 0,
         }}
       >
         {/* Dashboard - apenas Gerente e Admin */}
         {canAccessDashboard && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/')}
             selected={location.pathname === '/'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               backgroundColor: location.pathname === '/' 
-                ? (open ? '#e3f2fd' : 'transparent')
+                ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
               color: location.pathname === '/' 
                 ? 'primary.main'
                 : 'text.secondary',
               '&:hover': {
                 '& > div': {
-                  backgroundColor: !open ? '#e3f2fd' : undefined,
+                  backgroundColor: !effectiveOpen ? '#e3f2fd' : undefined,
                 },
-                backgroundColor: open 
+                backgroundColor: effectiveOpen 
                   ? (location.pathname === '/' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
               borderRadius: 2,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -212,18 +229,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
-                backgroundColor: !open && location.pathname === '/' ? '#e3f2fd' : 'transparent',
+                backgroundColor: !effectiveOpen && location.pathname === '/' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/' ? 'primary.main' : 'text.secondary',
                   '& svg': {
@@ -234,7 +251,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <DashboardIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="Dashboard" 
                 sx={{ 
@@ -251,33 +268,33 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         )}
 
         {/* Seção de Perfil - MINHAS OM's */}
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/minhas-oms')}
             selected={location.pathname === '/minhas-oms'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               backgroundColor: location.pathname === '/minhas-oms' 
-                ? (open ? '#e3f2fd' : 'transparent')
+                ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
               color: location.pathname === '/minhas-oms' 
                 ? 'primary.main'
                 : 'text.secondary',
               '&:hover': {
                 '& > div': {
-                  backgroundColor: !open ? '#e3f2fd' : undefined,
+                  backgroundColor: !effectiveOpen ? '#e3f2fd' : undefined,
                 },
-                backgroundColor: open 
+                backgroundColor: effectiveOpen 
                   ? (location.pathname === '/minhas-oms' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
               borderRadius: 2,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -296,18 +313,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
-                backgroundColor: !open && location.pathname === '/minhas-oms' ? '#e3f2fd' : 'transparent',
+                backgroundColor: !effectiveOpen && location.pathname === '/minhas-oms' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.secondary',
                   '& svg': {
@@ -318,7 +335,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <PersonIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="MINHAS OM's" 
                 sx={{ 
@@ -334,7 +351,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         </ListItem>
 
         {/* Categoria MANUTENÇÃO */}
-        {open && (
+        {effectiveOpen && (
           <Typography
             variant="caption"
             sx={{
@@ -351,26 +368,26 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </Typography>
         )}
         
-        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/ocorrencias')}
             selected={location.pathname === '/ocorrencias'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               backgroundColor: location.pathname === '/ocorrencias' 
-                ? (open ? '#e3f2fd' : 'transparent')
+                ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
               color: location.pathname === '/ocorrencias' 
                 ? 'primary.main'
                 : 'text.secondary',
               '&:hover': {
                 '& > div': {
-                  backgroundColor: !open ? '#e3f2fd' : undefined,
+                  backgroundColor: !effectiveOpen ? '#e3f2fd' : undefined,
                 },
-                backgroundColor: open 
+                backgroundColor: effectiveOpen 
                   ? (location.pathname === '/ocorrencias' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
@@ -378,7 +395,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               fontWeight: 500,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -397,18 +414,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
-                backgroundColor: !open && location.pathname === '/ocorrencias' ? '#e3f2fd' : 'transparent',
+                backgroundColor: !effectiveOpen && location.pathname === '/ocorrencias' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.secondary',
                   '& svg': {
@@ -419,7 +436,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <BuildIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <>
                 <ListItemText 
                   primary="Abrir OM" 
@@ -437,33 +454,33 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         </ListItem>
         
         {canManageOM && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/visualizar-om')}
             selected={location.pathname === '/visualizar-om'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               backgroundColor: location.pathname === '/visualizar-om' 
-                ? (open ? '#e3f2fd' : 'transparent')
+                ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
               color: location.pathname === '/visualizar-om' 
                 ? 'primary.main'
                 : 'text.secondary',
               '&:hover': {
                 '& > div': {
-                  backgroundColor: !open ? '#e3f2fd' : undefined,
+                  backgroundColor: !effectiveOpen ? '#e3f2fd' : undefined,
                 },
-                backgroundColor: open 
+                backgroundColor: effectiveOpen 
                   ? (location.pathname === '/visualizar-om' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
               borderRadius: 2,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -482,18 +499,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
-                backgroundColor: !open && location.pathname === '/visualizar-om' ? '#e3f2fd' : 'transparent',
+                backgroundColor: !effectiveOpen && location.pathname === '/visualizar-om' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.secondary',
                   '& svg': {
@@ -504,7 +521,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <ListAltIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="Visualizar OM" 
                 sx={{ 
@@ -520,33 +537,33 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         )}
         
         {canAccessMaquinarios && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/maquinarios')}
             selected={location.pathname === '/maquinarios'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               backgroundColor: location.pathname === '/maquinarios' 
-                ? (open ? '#e3f2fd' : 'transparent')
+                ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
               color: location.pathname === '/maquinarios' 
                 ? 'primary.main'
                 : 'text.secondary',
               '&:hover': {
                 '& > div': {
-                  backgroundColor: !open ? '#e3f2fd' : undefined,
+                  backgroundColor: !effectiveOpen ? '#e3f2fd' : undefined,
                 },
-                backgroundColor: open 
+                backgroundColor: effectiveOpen 
                   ? (location.pathname === '/maquinarios' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
               borderRadius: 2,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -565,18 +582,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
-                backgroundColor: !open && location.pathname === '/maquinarios' ? '#e3f2fd' : 'transparent',
+                backgroundColor: !effectiveOpen && location.pathname === '/maquinarios' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.secondary',
                   '& svg': {
@@ -587,7 +604,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <ConstructionIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="Maquinários" 
                 sx={{ 
@@ -603,33 +620,33 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         )}
         
         {canAccessParadas && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/paradas')}
             selected={location.pathname === '/paradas'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               backgroundColor: location.pathname === '/paradas' 
-                ? (open ? '#e3f2fd' : 'transparent')
+                ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
               color: location.pathname === '/paradas' 
                 ? 'primary.main'
                 : 'text.secondary',
               '&:hover': {
                 '& > div': {
-                  backgroundColor: !open ? '#e3f2fd' : undefined,
+                  backgroundColor: !effectiveOpen ? '#e3f2fd' : undefined,
                 },
-                backgroundColor: open 
+                backgroundColor: effectiveOpen 
                   ? (location.pathname === '/paradas' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
               borderRadius: 2,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -648,18 +665,18 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
-                backgroundColor: !open && location.pathname === '/paradas' ? '#e3f2fd' : 'transparent',
+                backgroundColor: !effectiveOpen && location.pathname === '/paradas' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/paradas' ? 'primary.main' : 'text.secondary',
                   '& svg': {
@@ -670,7 +687,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <PauseCircleIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="Paradas" 
                 sx={{ 
@@ -687,24 +704,24 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
 
         {/* Painel Administrativo - Gerente e Admin */}
         {canAccessAdmin && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: open ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
           <ListItemButton
             onClick={() => navigate('/admin/permissoes')}
             selected={location.pathname === '/admin/permissoes'}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
-              backgroundColor: location.pathname === '/admin/permissoes' ? (open ? '#e3f2fd' : 'transparent') : 'transparent',
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
+              backgroundColor: location.pathname === '/admin/permissoes' ? (effectiveOpen ? '#e3f2fd' : 'transparent') : 'transparent',
               color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary',
               '&:hover': {
-                backgroundColor: open ? (location.pathname === '/admin/permissoes' ? '#e3f2fd' : 'action.hover') : 'transparent',
+                backgroundColor: effectiveOpen ? (location.pathname === '/admin/permissoes' ? '#e3f2fd' : 'action.hover') : 'transparent',
               },
               borderRadius: 2,
               fontSize: '0.875rem',
               position: 'relative',
-              ...(open && {
+              ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
@@ -719,12 +736,12 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               }),
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: open ? 'flex-start' : 'center', width: open ? 'auto' : 40, height: 40, borderRadius: 2, boxSizing: 'content-box' }}>
-              <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 0, justifyContent: 'center', color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary', '& svg': { fontSize: '1.25rem' } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: effectiveOpen ? 'flex-start' : 'center', width: effectiveOpen ? 'auto' : 40, height: 40, borderRadius: 2, boxSizing: 'content-box' }}>
+              <ListItemIcon sx={{ minWidth: 0, mr: effectiveOpen ? 2 : 0, justifyContent: 'center', color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary', '& svg': { fontSize: '1.25rem' } }}>
                 <AdminPanelSettingsIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText
                 primary="Painel Administrativo"
                 sx={{ '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 500, color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary' } }}
@@ -741,7 +758,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
         sx={{
           mt: 'auto',
           pb: 2,
-          px: open ? 2 : 1,
+          px: effectiveOpen ? 2 : 1,
         }}
       >
         {/* Modo Escuro/Claro */}
@@ -750,9 +767,9 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
             onClick={toggleTheme}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               borderRadius: 2,
               fontSize: '0.875rem',
               color: 'text.secondary',
@@ -765,8 +782,8 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
                 boxSizing: 'content-box',
@@ -775,7 +792,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: 'text.secondary',
                   '& svg': {
@@ -786,7 +803,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText
                 primary={mode === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
                 sx={{
@@ -800,7 +817,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </ListItemButton>
         </ListItem>
 
-        {open && user?.email && (
+        {effectiveOpen && user?.email && (
           <>
             <Typography
               variant="caption"
@@ -838,16 +855,16 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </>
         )}
 
-        <Divider sx={{ my: 1, mx: open ? 2 : 1 }} />
+        <Divider sx={{ my: 1, mx: effectiveOpen ? 2 : 1 }} />
 
         {/* Ajuda */}
         <ListItem disablePadding sx={{ display: 'block', mb: 1 }}>
           <ListItemButton
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               borderRadius: 2,
               fontSize: '0.875rem',
               color: 'text.secondary',
@@ -862,8 +879,8 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
                 boxSizing: 'content-box',
@@ -872,7 +889,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: 'text.secondary',
                   '& svg': {
@@ -887,7 +904,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <HelpIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="Ajuda" 
                 sx={{ 
@@ -910,9 +927,9 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
             }}
             sx={{
               minHeight: 40,
-              justifyContent: open ? 'initial' : 'center',
-              px: open ? 2 : 0,
-              py: open ? 0 : 0.5,
+              justifyContent: effectiveOpen ? 'initial' : 'center',
+              px: effectiveOpen ? 2 : 0,
+              py: effectiveOpen ? 0 : 0.5,
               borderRadius: 2,
               fontSize: '0.875rem',
               color: 'text.secondary',
@@ -925,8 +942,8 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: open ? 'flex-start' : 'center',
-                width: open ? 'auto' : 40,
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                width: effectiveOpen ? 'auto' : 40,
                 height: 40,
                 borderRadius: 2,
                 boxSizing: 'content-box',
@@ -935,7 +952,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 0,
+                  mr: effectiveOpen ? 2 : 0,
                   justifyContent: 'center',
                   color: 'text.secondary',
                   '& svg': {
@@ -950,7 +967,7 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
                 <ExitToAppIcon />
               </ListItemIcon>
             </Box>
-            {open && (
+            {effectiveOpen && (
               <ListItemText 
                 primary="Sair" 
                 sx={{ 
@@ -972,21 +989,17 @@ export const Sidebar = ({ open, onToggle }: SidebarProps) => {
       {isMobile ? (
         <Drawer
           variant="temporary"
-          open={true}
-          onClose={onToggle}
+          open={mobileDrawerOpen}
+          onClose={onMobileDrawerClose}
           ModalProps={{
             keepMounted: true,
           }}
           sx={{
-            width: open ? drawerWidthExpanded : drawerWidthCollapsed,
+            width: drawerWidthExpanded,
             flexShrink: 0,
             '& .MuiDrawer-paper': {
-              width: open ? drawerWidthExpanded : drawerWidthCollapsed,
+              width: drawerWidthExpanded,
               boxSizing: 'border-box',
-              transition: theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
               overflowX: 'hidden',
             },
           }}
