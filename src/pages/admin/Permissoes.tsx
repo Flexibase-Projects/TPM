@@ -43,7 +43,14 @@ export const Permissoes = () => {
       })
       setRolesMap(map)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro ao carregar usuários')
+      const msg =
+        e instanceof Error
+          ? e.message
+          : typeof (e as { message?: string })?.message === 'string'
+            ? (e as { message: string }).message
+            : 'Erro ao carregar usuários'
+      console.error('Permissões load falhou:', e)
+      setError(msg)
     } finally {
       setLoading(false)
     }
