@@ -9,17 +9,20 @@ import {
   Fab,
   Tooltip,
   TablePagination,
+  Button,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import { MaquinariosList } from '../components/maquinarios/MaquinariosList'
 import { MaquinarioFormDialog } from '../components/maquinarios/MaquinarioFormDialog'
 import { MaquinarioDetailsDialog } from '../components/maquinarios/MaquinarioDetailsDialog'
 import { RegistrarParadaDialog } from '../components/maquinarios/RegistrarParadaDialog'
 import { MaquinariosFiltersComponent, type MaquinariosFilters } from '../components/maquinarios/MaquinariosFilters'
-import { getMaquinarios, deleteMaquinario, getMaquinarioById, getOcorrenciasAbertasByMaquinario } from '../services/maquinarioService'
+import { getMaquinarios, deleteMaquinario, getMaquinarioById, createMaquinario, getOcorrenciasAbertasByMaquinario } from '../services/maquinarioService'
+import { gerarRelatorioMaquinariosPdf } from '../utils/relatorioMaquinariosPdf'
 import { calcularStatusMaquinario } from '../utils/statusMaquinario'
 import { ROWS_PER_PAGE } from '../utils/constants'
-import type { Maquinario } from '../types/maquinario'
+import type { Maquinario, MaquinarioFormData } from '../types/maquinario'
 
 export const Maquinarios = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -41,6 +44,7 @@ export const Maquinarios = () => {
     searchTerm: '',
   })
   const [page, setPage] = useState(0)
+  const [reportLoading, setReportLoading] = useState(false)
 
   const loadMaquinarios = async () => {
     try {
@@ -146,6 +150,60 @@ export const Maquinarios = () => {
     }
   }
 
+  const handleDuplicate = async (maquinario: Maquinario) => {
+    try {
+      const full = await getMaquinarioById(maquinario.id)
+      const formData: MaquinarioFormData = {
+        identificacao: `Cópia de ${full.identificacao} (${Date.now()})`,
+        nome: full.nome ?? null,
+        nome_operador: full.nome_operador,
+        area_id: full.area_id,
+        categoria: full.categoria,
+        tempo_disponivel_horas: full.tempo_disponivel_horas,
+        status_maquinario: full.status_maquinario || 'Disponivel',
+        motivo_inativacao: full.motivo_inativacao || null,
+        imagem_url: null,
+        valor_maquinario: full.valor_maquinario ?? null,
+        manutencao_periodo_dias: full.manutencao_periodo_dias ?? 30,
+        proxima_limpeza_em: null,
+        motivos_parada: full.motivos_parada?.map((m) => m.descricao) ?? [],
+        checklist_itens:
+          full.checklist_itens?.map((item) => ({
+            descricao: item.descricao,
+            tipo: item.tipo,
+            ordem: item.ordem,
+          })) ?? [],
+      }
+      const created = await createMaquinario(formData)
+      const fullCreated = await getMaquinarioById(created.id)
+      setDetailsOpen(false)
+      setEditingMaquinario(fullCreated)
+      setFormOpen(true)
+      await loadMaquinarios()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao duplicar maquinário'
+      setError(msg === 'Failed to fetch' ? 'Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL e se o servidor está acessível.' : msg)
+    }
+  }
+
+  const handleExtrairRelatorio = async () => {
+    setReportLoading(true)
+    setError(null)
+    try {
+      const data = await getMaquinarios()
+      gerarRelatorioMaquinariosPdf(data)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao gerar relatório'
+      setError(
+        msg === 'Failed to fetch'
+          ? 'Sem conexão com o Supabase. Verifique VITE_SUPABASE_URL e se o servidor está acessível.'
+          : msg
+      )
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
   const handleFormClose = () => {
     setFormOpen(false)
     setEditingMaquinario(null)
@@ -240,13 +298,24 @@ export const Maquinarios = () => {
 
   return (
     <Box sx={{ position: 'relative', minHeight: '100%', pb: 10 }}>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 600, fontSize: '1.125rem', mb: 0.5 }}>
-          Maquinários
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8125rem' }}>
-          Cadastro de Maquinários da Indústria
-        </Typography>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+        <Box>
+          <Typography variant="h5" component="h1" sx={{ fontWeight: 600, fontSize: '1.125rem', mb: 0.5 }}>
+            Maquinários
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8125rem' }}>
+            Cadastro de Maquinários da Indústria
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={reportLoading ? <CircularProgress size={18} color="inherit" /> : <PictureAsPdfIcon />}
+          onClick={handleExtrairRelatorio}
+          disabled={reportLoading}
+        >
+          Extrair relatório completo
+        </Button>
       </Box>
 
       {error && (
@@ -272,6 +341,7 @@ export const Maquinarios = () => {
             maquinarios={paginatedMaquinarios}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
             onRowClick={handleRowClick}
           />
           <TablePagination

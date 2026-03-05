@@ -114,7 +114,7 @@ export const OcorrenciasList = ({
 
   return (
     <>
-      <TableContainer>
+      <TableContainer sx={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>

@@ -66,6 +66,9 @@ export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
     }
     let cancelled = false
     setLoading(true)
+    // #region agent log
+    fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'PermissionsContext.tsx:effect', message: 'Permissions loading=true', data: { userId: user?.id }, timestamp: Date.now(), hypothesisId: 'H4' }) }).catch(() => {})
+    // #endregion
 
     let willRetry = false
     const run = () => {

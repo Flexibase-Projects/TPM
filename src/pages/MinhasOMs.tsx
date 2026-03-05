@@ -223,12 +223,10 @@ export const MinhasOMs = () => {
         Visualize e gerencie as ordens de manutenção que você abriu ou está responsável por atender
       </Typography>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <OcorrenciasFiltersComponent
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
-      </Paper>
+      <OcorrenciasFiltersComponent
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
 
       <Paper sx={{ p: 2, overflow: 'hidden' }}>
         <OcorrenciasList

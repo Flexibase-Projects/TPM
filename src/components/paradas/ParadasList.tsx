@@ -82,7 +82,7 @@ export const ParadasList = ({ paradas, onRowClick, onEdit, onDelete }: ParadasLi
 
   if (paradas.length === 0) {
     return (
-      <TableContainer>
+      <TableContainer sx={{ overflowX: 'auto' }}>
         <Table>
           <TableBody>
             <TableRow>
@@ -97,7 +97,7 @@ export const ParadasList = ({ paradas, onRowClick, onEdit, onDelete }: ParadasLi
   }
 
   return (
-    <TableContainer>
+    <TableContainer sx={{ overflowX: 'auto' }}>
       <Table>
         <TableHead>
           <TableRow>

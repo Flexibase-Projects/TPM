@@ -32,6 +32,7 @@ export interface ChecklistItem {
 export interface Maquinario {
   id: string
   identificacao: string
+  nome?: string | null
   nome_operador: string
   area_id: string
   categoria: 'Crítica' | 'Normal'
@@ -39,6 +40,7 @@ export interface Maquinario {
   status_maquinario?: StatusMaquinario
   motivo_inativacao?: string | null
   imagem_url?: string | null
+  valor_maquinario?: number | null
   manutencao_periodo_dias?: number | null
   proxima_limpeza_em?: string | null
   created_at: string
@@ -53,6 +55,7 @@ export interface Maquinario {
 
 export interface MaquinarioFormData {
   identificacao: string
+  nome?: string | null
   nome_operador: string
   area_id: string
   categoria: 'Crítica' | 'Normal'
@@ -60,6 +63,7 @@ export interface MaquinarioFormData {
   status_maquinario?: StatusMaquinario
   motivo_inativacao?: string | null
   imagem_url?: string | null
+  valor_maquinario?: number | null
   manutencao_periodo_dias?: number | null
   proxima_limpeza_em?: string | null
   motivos_parada: string[]

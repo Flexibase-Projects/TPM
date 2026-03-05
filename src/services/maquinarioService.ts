@@ -77,6 +77,7 @@ export const createMaquinario = async (formData: MaquinarioFormData): Promise<Ma
     .from('TPM_maquinarios')
     .insert({
       identificacao: formData.identificacao,
+      nome: formData.nome?.trim() || null,
       nome_operador: formData.nome_operador,
       area_id: formData.area_id,
       categoria: formData.categoria,
@@ -84,6 +85,7 @@ export const createMaquinario = async (formData: MaquinarioFormData): Promise<Ma
       status_maquinario: formData.status_maquinario || 'Disponivel',
       motivo_inativacao: formData.motivo_inativacao || null,
       imagem_url: formData.imagem_url ?? null,
+      valor_maquinario: formData.valor_maquinario ?? null,
       manutencao_periodo_dias: formData.manutencao_periodo_dias ?? 30,
       proxima_limpeza_em: formData.proxima_limpeza_em || null,
     })
@@ -135,6 +137,7 @@ export const updateMaquinario = async (
     .from('TPM_maquinarios')
     .update({
       identificacao: formData.identificacao,
+      nome: formData.nome?.trim() || null,
       nome_operador: formData.nome_operador,
       area_id: formData.area_id,
       categoria: formData.categoria,
@@ -142,6 +145,7 @@ export const updateMaquinario = async (
       status_maquinario: formData.status_maquinario || 'Disponivel',
       motivo_inativacao: formData.motivo_inativacao || null,
       imagem_url: formData.imagem_url ?? null,
+      valor_maquinario: formData.valor_maquinario ?? null,
       manutencao_periodo_dias: formData.manutencao_periodo_dias ?? 30,
       proxima_limpeza_em: formData.proxima_limpeza_em || null,
     })

@@ -14,24 +14,24 @@ import {
   ListItemText,
   Box,
   Tooltip,
-  Typography,
 } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
 import ErrorIcon from '@mui/icons-material/Error'
 import BlockIcon from '@mui/icons-material/Block'
 import ImageIcon from '@mui/icons-material/Image'
 import type { Maquinario, StatusMaquinarioCalculado } from '../../types/maquinario'
-import { formatarHorasParaHHMM } from '../../utils/constants'
 import { getImagemDisplayUrl } from '../../services/maquinarioService'
 
 interface MaquinariosListProps {
   maquinarios: Maquinario[]
   onEdit: (maquinario: Maquinario) => void
   onDelete: (id: string) => void
+  onDuplicate?: (maquinario: Maquinario) => void
   onRowClick?: (maquinario: Maquinario) => void
 }
 
@@ -39,6 +39,7 @@ export const MaquinariosList = ({
   maquinarios,
   onEdit,
   onDelete,
+  onDuplicate,
   onRowClick,
 }: MaquinariosListProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -76,6 +77,13 @@ export const MaquinariosList = ({
   const handleDelete = () => {
     if (selectedMaquinario) {
       onDelete(selectedMaquinario.id)
+    }
+    handleMenuClose()
+  }
+
+  const handleDuplicate = () => {
+    if (selectedMaquinario && onDuplicate) {
+      onDuplicate(selectedMaquinario)
     }
     handleMenuClose()
   }
@@ -130,11 +138,11 @@ export const MaquinariosList = ({
 
   if (maquinarios.length === 0) {
     return (
-      <TableContainer>
+      <TableContainer sx={{ overflowX: 'auto' }}>
         <Table>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 4, fontSize: '0.8125rem', color: 'text.secondary' }}>
+              <TableCell colSpan={9} align="center" sx={{ py: 4, fontSize: '0.8125rem', color: 'text.secondary' }}>
                 Nenhum maquinário cadastrado
               </TableCell>
             </TableRow>
@@ -149,28 +157,31 @@ export const MaquinariosList = ({
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
-              Status
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1, width: 40 }} title="Status">
+              •
             </TableCell>
-            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
-              Imagem
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1, width: 44 }}>
+              Img
             </TableCell>
-            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
-              Identificação
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+              Ident.
             </TableCell>
-            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+              Nome
+            </TableCell>
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
               Área
             </TableCell>
-            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
               Operador
             </TableCell>
-            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
-              Hrs Disp./Dia
+            <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+              Valor
             </TableCell>
-            <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 600, py: 1.5 }}>
-              Categoria
+            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 1 }}>
+              Cat.
             </TableCell>
-            <TableCell align="right" width={80} sx={{ py: 1.5 }}></TableCell>
+            <TableCell align="right" width={48} sx={{ py: 1 }}></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -191,17 +202,14 @@ export const MaquinariosList = ({
                 },
               }}
             >
-              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1, verticalAlign: 'middle' }}>
                 <Tooltip title={getStatusLabel(maquinario.status_calculado)} arrow>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                     {getStatusIcon(maquinario.status_calculado)}
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                      {getStatusLabel(maquinario.status_calculado)}
-                    </Typography>
                   </Box>
                 </Tooltip>
               </TableCell>
-              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1 }}>
                 {(() => {
                   const displayUrl = getImagemDisplayUrl(maquinario.imagem_url)
                   const showPlaceholder = !displayUrl || imagemLoadErrors.has(maquinario.id)
@@ -209,8 +217,8 @@ export const MaquinariosList = ({
                     const placeholderBox = (
                       <Box
                         sx={{
-                          width: 40,
-                          height: 40,
+                          width: 32,
+                          height: 32,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -218,7 +226,7 @@ export const MaquinariosList = ({
                           bgcolor: 'action.hover',
                         }}
                       >
-                        <ImageIcon sx={{ fontSize: '1.25rem', color: 'text.secondary' }} />
+                        <ImageIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
                       </Box>
                     )
                     const failedLoadTooltip = maquinario.imagem_url
@@ -252,27 +260,32 @@ export const MaquinariosList = ({
                   )
                 })()}
               </TableCell>
-              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1 }}>
                 {maquinario.identificacao}
               </TableCell>
-              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1 }}>
+                {maquinario.nome || '-'}
+              </TableCell>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1 }}>
                 {maquinario.area ? maquinario.area.nome : '-'}
               </TableCell>
-              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1 }}>
                 {maquinario.nome_operador}
               </TableCell>
-              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1.5 }}>
-                {formatarHorasParaHHMM(maquinario.tempo_disponivel_horas || 10)}h
+              <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider', fontSize: '0.8125rem', py: 1 }}>
+                {maquinario.valor_maquinario != null && maquinario.valor_maquinario > 0
+                  ? Number(maquinario.valor_maquinario).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                  : '-'}
               </TableCell>
-              <TableCell sx={{ fontSize: '0.8125rem', py: 1.5 }}>
+              <TableCell sx={{ fontSize: '0.8125rem', py: 1 }}>
                 <Chip
                   label={maquinario.categoria}
                   color={maquinario.categoria === 'Crítica' ? 'error' : 'default'}
                   size="small"
-                  sx={{ fontSize: '0.75rem', height: 22 }}
+                  sx={{ fontSize: '0.7rem', height: 20 }}
                 />
               </TableCell>
-              <TableCell align="right" sx={{ py: 1.5 }}>
+              <TableCell align="right" sx={{ py: 1 }}>
                 <IconButton
                   size="small"
                   onClick={(e) => {
@@ -284,11 +297,9 @@ export const MaquinariosList = ({
                     opacity: shouldShowActions(maquinario.id) ? 1 : 0,
                     pointerEvents: shouldShowActions(maquinario.id) ? 'auto' : 'none',
                     transition: 'opacity 0.2s ease-in-out',
-                    width: 32,
-                    height: 32,
-                    '& svg': {
-                      fontSize: '1.125rem',
-                    },
+                    width: 28,
+                    height: 28,
+                    '& svg': { fontSize: '1rem' },
                   }}
                 >
                   <SettingsIcon />
@@ -330,6 +341,14 @@ export const MaquinariosList = ({
           </ListItemIcon>
           <ListItemText>Editar</ListItemText>
         </MenuItem>
+        {onDuplicate && (
+          <MenuItem onClick={handleDuplicate}>
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <ContentCopyIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Duplicar</ListItemText>
+          </MenuItem>
+        )}
         <MenuItem onClick={handleDelete}>
           <ListItemIcon sx={{ minWidth: 36 }}>
             <DeleteIcon fontSize="small" />

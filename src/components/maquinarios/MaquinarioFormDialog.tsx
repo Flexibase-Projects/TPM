@@ -63,6 +63,7 @@ export const MaquinarioFormDialog = ({
   const [areas, setAreas] = useState<Area[]>([])
   const [formData, setFormData] = useState<MaquinarioFormData>({
     identificacao: '',
+    nome: null,
     nome_operador: '',
     area_id: '',
     categoria: 'Normal',
@@ -70,6 +71,7 @@ export const MaquinarioFormDialog = ({
     status_maquinario: 'Disponivel',
     motivo_inativacao: null,
     imagem_url: null,
+    valor_maquinario: null,
     manutencao_periodo_dias: 30,
     proxima_limpeza_em: null,
     motivos_parada: [],
@@ -88,6 +90,7 @@ export const MaquinarioFormDialog = ({
       if (maquinario) {
         setFormData({
           identificacao: maquinario.identificacao,
+          nome: maquinario.nome ?? null,
           nome_operador: maquinario.nome_operador,
           area_id: maquinario.area_id,
           categoria: maquinario.categoria,
@@ -95,6 +98,7 @@ export const MaquinarioFormDialog = ({
           status_maquinario: maquinario.status_maquinario || 'Disponivel',
           motivo_inativacao: maquinario.motivo_inativacao || null,
           imagem_url: maquinario.imagem_url ?? null,
+          valor_maquinario: maquinario.valor_maquinario ?? null,
           manutencao_periodo_dias: maquinario.manutencao_periodo_dias ?? 30,
           proxima_limpeza_em: maquinario.proxima_limpeza_em ?? null,
           motivos_parada: maquinario.motivos_parada?.map(m => m.descricao) || [],
@@ -108,6 +112,7 @@ export const MaquinarioFormDialog = ({
       } else {
         setFormData({
           identificacao: '',
+          nome: null,
           nome_operador: '',
           area_id: '',
           categoria: 'Normal',
@@ -115,6 +120,7 @@ export const MaquinarioFormDialog = ({
           status_maquinario: 'Disponivel',
           motivo_inativacao: null,
           imagem_url: null,
+          valor_maquinario: null,
           manutencao_periodo_dias: 30,
           proxima_limpeza_em: null,
           motivos_parada: [],
@@ -410,6 +416,20 @@ export const MaquinarioFormDialog = ({
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
+                      label="Nome"
+                      placeholder="Nome amigável do maquinário"
+                      value={formData.nome ?? ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nome: e.target.value || null })
+                      }
+                      variant="outlined"
+                      size="medium"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
                       label="Nome do Operador"
                       value={formData.nome_operador}
                       onChange={(e) =>
@@ -450,6 +470,31 @@ export const MaquinarioFormDialog = ({
                       variant="outlined"
                       size="medium"
                       helperText="Tempo disponível de operação em horas"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Valor do maquinário (R$)"
+                      value={formData.valor_maquinario ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        if (value === '') {
+                          setFormData({ ...formData, valor_maquinario: null })
+                          return
+                        }
+                        const parsed = parseFloat(value)
+                        setFormData({
+                          ...formData,
+                          valor_maquinario: isNaN(parsed) ? null : parsed,
+                        })
+                      }}
+                      inputProps={{ min: 0, step: 0.01 }}
+                      variant="outlined"
+                      size="medium"
+                      helperText="Valor da máquina (informado manualmente)"
                     />
                   </Grid>
                 </Grid>

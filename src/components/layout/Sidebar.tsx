@@ -14,8 +14,6 @@ import {
   useMediaQuery,
   Box,
   Divider,
-  Button,
-  CircularProgress,
 } from '@mui/material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -33,7 +31,6 @@ import { usePermissions } from '../../contexts/PermissionsContext'
 import PersonIcon from '@mui/icons-material/Person'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
-import RefreshIcon from '@mui/icons-material/Refresh'
 import { GearLogo } from './GearLogo'
 
 export const drawerWidthExpanded = 240
@@ -61,18 +58,33 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
     canManageOM,
     canAccessMaquinarios,
     canAccessParadas,
-    refetchRole,
-    loading: permissionsLoading,
   } = usePermissions()
 
   const effectiveOpen = isMobile && mobileDrawerOpen ? true : open
   const prevPathnameRef = useRef(location.pathname)
+  const mountIdRef = useRef(Math.random().toString(36).slice(2, 9))
+
+  const handleNav = (path: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'Sidebar.tsx:navClick', message: 'Sidebar nav click', data: { to: path, from: location.pathname }, timestamp: Date.now(), hypothesisId: 'H1' }) }).catch(() => {})
+    // #endregion
+    navigate(path)
+  }
+
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'Sidebar.tsx:mount', message: 'Sidebar mounted', data: { mountId: mountIdRef.current }, timestamp: Date.now(), hypothesisId: 'H2' }) }).catch(() => {})
+  }, [])
+  // #endregion
 
   useEffect(() => {
     if (!isMobile) return
     const prev = prevPathnameRef.current
     prevPathnameRef.current = location.pathname
     if (prev !== location.pathname) {
+      // #region agent log
+      fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'Sidebar.tsx:pathnameChange', message: 'Mobile drawer close on pathname change', data: { from: prev, to: location.pathname }, timestamp: Date.now(), hypothesisId: 'H5' }) }).catch(() => {})
+      // #endregion
       onMobileDrawerClose?.()
     }
   }, [location.pathname, isMobile, onMobileDrawerClose])
@@ -91,10 +103,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'flex-start',
-          px: effectiveOpen ? 2 : 1,
-          py: 2,
-          minHeight: { xs: 56, sm: 64 },
-          gap: 1,
+          px: effectiveOpen ? 1.5 : 1,
+          py: 1.25,
+          minHeight: { xs: 52, sm: 56 },
+          gap: 0.5,
         }}
       >
         <Box
@@ -109,22 +121,26 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
             sx={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: effectiveOpen ? undefined : 'center',
               gap: 0.25,
               minWidth: 0,
+              ...(!effectiveOpen && { width: '100%' }),
             }}
           >
             <IconButton
-              onClick={() => navigate('/')}
+              onClick={() => handleNav('/')}
               aria-label="Início"
+              size="small"
               sx={{
                 color: 'primary.main',
-                p: effectiveOpen ? 1.5 : 1,
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                },
+                p: effectiveOpen ? 1.25 : 0.75,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                '&:hover': { backgroundColor: 'action.hover' },
               }}
             >
-              <GearLogo size={effectiveOpen ? 40 : 28} color="currentColor" />
+              <GearLogo size={effectiveOpen ? 36 : 26} color="currentColor" />
             </IconButton>
             {effectiveOpen && (
               <Typography
@@ -134,7 +150,7 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   fontWeight: 700,
                   color: 'text.primary',
                   letterSpacing: '0.02em',
-                  fontSize: '0.95rem',
+                  fontSize: '0.875rem',
                 }}
               >
                 TPM
@@ -160,8 +176,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
       </Toolbar>
       <Divider />
       {!effectiveOpen && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
-          <IconButton 
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 0.5 }}>
+          <IconButton
             onClick={isMobile ? onMobileDrawerClose : onToggle}
             size="small"
           >
@@ -174,25 +190,28 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
         </Box>
       )}
       {!effectiveOpen && <Divider />}
+      <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column', py: 0.5 }}>
       <List
+        dense
+        disablePadding
         sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: effectiveOpen ? 'stretch' : 'center',
-          px: effectiveOpen ? 2 : 0,
+          px: effectiveOpen ? 1.5 : 0,
         }}
       >
         {/* Dashboard - apenas Gerente e Admin */}
         {canAccessDashboard && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/')}
+            onClick={() => handleNav('/')}
             selected={location.pathname === '/'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/' 
                 ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
@@ -207,14 +226,14 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   ? (location.pathname === '/' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
-              borderRadius: 2,
-              fontSize: '0.875rem',
+              borderRadius: 1.5,
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -230,9 +249,9 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
+                width: effectiveOpen ? 'auto' : 36,
+                height: 36,
+                borderRadius: 1.5,
                 backgroundColor: !effectiveOpen && location.pathname === '/' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
@@ -240,12 +259,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/' ? 'primary.main' : 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <DashboardIcon />
@@ -255,8 +272,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemText 
                 primary="Dashboard" 
                 sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
+'& .MuiListItemText-primary': {
+                    fontSize: '0.8125rem',
                     fontWeight: 500,
                     color: location.pathname === '/' ? 'primary.main' : 'text.secondary',
                   } 
@@ -268,15 +285,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
         )}
 
         {/* Seção de Perfil - MINHAS OM's */}
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/minhas-oms')}
+            onClick={() => handleNav('/minhas-oms')}
             selected={location.pathname === '/minhas-oms'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/minhas-oms' 
                 ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
@@ -291,14 +308,14 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   ? (location.pathname === '/minhas-oms' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
-              borderRadius: 2,
-              fontSize: '0.875rem',
+              borderRadius: 1.5,
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -314,9 +331,9 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
+                width: effectiveOpen ? 'auto' : 36,
+                height: 36,
+                borderRadius: 1.5,
                 backgroundColor: !effectiveOpen && location.pathname === '/minhas-oms' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
@@ -324,12 +341,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <PersonIcon />
@@ -339,8 +354,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemText 
                 primary="MINHAS OM's" 
                 sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
+'& .MuiListItemText-primary': {
+                    fontSize: '0.8125rem',
                     fontWeight: 500,
                     color: location.pathname === '/minhas-oms' ? 'primary.main' : 'text.secondary',
                   } 
@@ -368,15 +383,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
           </Typography>
         )}
         
-        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/ocorrencias')}
+            onClick={() => handleNav('/ocorrencias')}
             selected={location.pathname === '/ocorrencias'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/ocorrencias' 
                 ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
@@ -391,15 +406,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   ? (location.pathname === '/ocorrencias' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
-              borderRadius: 2,
+              borderRadius: 1.5,
               fontWeight: 500,
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -415,9 +430,9 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
+                width: effectiveOpen ? 'auto' : 36,
+                height: 36,
+                borderRadius: 1.5,
                 backgroundColor: !effectiveOpen && location.pathname === '/ocorrencias' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
@@ -425,12 +440,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <BuildIcon />
@@ -441,8 +454,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 <ListItemText 
                   primary="Abrir OM" 
                   sx={{ 
-                    '& .MuiListItemText-primary': { 
-                      fontSize: '0.875rem', 
+'& .MuiListItemText-primary': {
+                    fontSize: '0.8125rem',
                       fontWeight: 500,
                       color: location.pathname === '/ocorrencias' ? 'primary.main' : 'text.secondary',
                     } 
@@ -454,15 +467,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
         </ListItem>
         
         {canManageOM && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/visualizar-om')}
+            onClick={() => handleNav('/visualizar-om')}
             selected={location.pathname === '/visualizar-om'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/visualizar-om' 
                 ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
@@ -477,14 +490,14 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   ? (location.pathname === '/visualizar-om' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
-              borderRadius: 2,
-              fontSize: '0.875rem',
+              borderRadius: 1.5,
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -500,9 +513,9 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
+                width: effectiveOpen ? 'auto' : 36,
+                height: 36,
+                borderRadius: 1.5,
                 backgroundColor: !effectiveOpen && location.pathname === '/visualizar-om' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
@@ -510,12 +523,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <ListAltIcon />
@@ -525,8 +536,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemText 
                 primary="Visualizar OM" 
                 sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
+'& .MuiListItemText-primary': {
+                    fontSize: '0.8125rem',
                     color: location.pathname === '/visualizar-om' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
@@ -537,15 +548,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
         )}
         
         {canAccessMaquinarios && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/maquinarios')}
+            onClick={() => handleNav('/maquinarios')}
             selected={location.pathname === '/maquinarios'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/maquinarios' 
                 ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
@@ -560,14 +571,14 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   ? (location.pathname === '/maquinarios' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
-              borderRadius: 2,
-              fontSize: '0.875rem',
+              borderRadius: 1.5,
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -583,9 +594,9 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
+                width: effectiveOpen ? 'auto' : 36,
+                height: 36,
+                borderRadius: 1.5,
                 backgroundColor: !effectiveOpen && location.pathname === '/maquinarios' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
@@ -593,12 +604,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <ConstructionIcon />
@@ -608,8 +617,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemText 
                 primary="Maquinários" 
                 sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
+'& .MuiListItemText-primary': {
+                    fontSize: '0.8125rem',
                     color: location.pathname === '/maquinarios' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
@@ -620,15 +629,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
         )}
         
         {canAccessParadas && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/paradas')}
+            onClick={() => handleNav('/paradas')}
             selected={location.pathname === '/paradas'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/paradas' 
                 ? (effectiveOpen ? '#e3f2fd' : 'transparent')
                 : 'transparent',
@@ -643,14 +652,14 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                   ? (location.pathname === '/paradas' ? '#e3f2fd' : 'action.hover')
                   : 'transparent',
               },
-              borderRadius: 2,
-              fontSize: '0.875rem',
+              borderRadius: 1.5,
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -666,9 +675,9 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
+                width: effectiveOpen ? 'auto' : 36,
+                height: 36,
+                borderRadius: 1.5,
                 backgroundColor: !effectiveOpen && location.pathname === '/paradas' ? '#e3f2fd' : 'transparent',
                 boxSizing: 'content-box',
               }}
@@ -676,12 +685,10 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: location.pathname === '/paradas' ? 'primary.main' : 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <PauseCircleIcon />
@@ -691,8 +698,8 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               <ListItemText 
                 primary="Paradas" 
                 sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
+'& .MuiListItemText-primary': {
+                    fontSize: '0.8125rem',
                     color: location.pathname === '/paradas' ? 'primary.main' : 'text.secondary',
                   } 
                 }} 
@@ -704,28 +711,28 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
 
         {/* Painel Administrativo - Gerente e Admin */}
         {canAccessAdmin && (
-        <ListItem disablePadding sx={{ display: 'block', mb: 1, px: effectiveOpen ? 0 : 1 }}>
+        <ListItem disablePadding sx={{ display: 'block', mb: 0.5, px: effectiveOpen ? 0 : 0.5 }}>
           <ListItemButton
-            onClick={() => navigate('/admin/permissoes')}
+            onClick={() => handleNav('/admin/permissoes')}
             selected={location.pathname === '/admin/permissoes'}
             sx={{
-              minHeight: 40,
+              minHeight: 36,
               justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
+              px: effectiveOpen ? 1.5 : 0,
+              py: 0.25,
               backgroundColor: location.pathname === '/admin/permissoes' ? (effectiveOpen ? '#e3f2fd' : 'transparent') : 'transparent',
               color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary',
               '&:hover': {
                 backgroundColor: effectiveOpen ? (location.pathname === '/admin/permissoes' ? '#e3f2fd' : 'action.hover') : 'transparent',
               },
-              borderRadius: 2,
-              fontSize: '0.875rem',
+              borderRadius: 1.5,
+              fontSize: '0.8125rem',
               position: 'relative',
               ...(effectiveOpen && {
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 8,
+                  right: 6,
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 6,
@@ -736,15 +743,15 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               }),
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: effectiveOpen ? 'flex-start' : 'center', width: effectiveOpen ? 'auto' : 40, height: 40, borderRadius: 2, boxSizing: 'content-box' }}>
-              <ListItemIcon sx={{ minWidth: 0, mr: effectiveOpen ? 2 : 0, justifyContent: 'center', color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary', '& svg': { fontSize: '1.25rem' } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: effectiveOpen ? 'flex-start' : 'center', width: effectiveOpen ? 'auto' : 36, height: 36, borderRadius: 1.5, boxSizing: 'content-box' }}>
+              <ListItemIcon sx={{ minWidth: 0, mr: effectiveOpen ? 1.5 : 0, justifyContent: 'center', color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary', '& svg': { fontSize: '1.25rem' } }}>
                 <AdminPanelSettingsIcon />
               </ListItemIcon>
             </Box>
             {effectiveOpen && (
               <ListItemText
                 primary="Painel Administrativo"
-                sx={{ '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 500, color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary' } }}
+                sx={{ '& .MuiListItemText-primary': { fontSize: '0.8125rem', fontWeight: 500, color: location.pathname === '/admin/permissoes' ? 'primary.main' : 'text.secondary' } }}
               />
             )}
           </ListItemButton>
@@ -752,235 +759,159 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
         )}
 
       </List>
-      
-      {/* Seção inferior fixa */}
+      </Box>
+
+      {/* Seção inferior fixa: Modo tema, Ajuda, usuário + Sair */}
       <Box
         sx={{
+          flexShrink: 0,
           mt: 'auto',
-          pb: 2,
-          px: effectiveOpen ? 2 : 1,
+          borderTop: 1,
+          borderColor: 'divider',
+          py: 0.75,
+          px: effectiveOpen ? 1.5 : 0.5,
         }}
       >
-        {/* Modo Escuro/Claro */}
-        <ListItem disablePadding sx={{ display: 'block', mb: 1 }}>
-          <ListItemButton
-            onClick={toggleTheme}
-            sx={{
-              minHeight: 40,
-              justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
-              borderRadius: 2,
-              fontSize: '0.875rem',
-              color: 'text.secondary',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
-            <Box
+        <List dense disablePadding sx={{ display: 'flex', flexDirection: 'column', alignItems: effectiveOpen ? 'stretch' : 'center' }}>
+          {/* Modo Escuro/Claro */}
+          <ListItem disablePadding sx={{ mb: 0.25 }}>
+            <ListItemButton
+              onClick={toggleTheme}
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
-                boxSizing: 'content-box',
+                minHeight: 36,
+                justifyContent: effectiveOpen ? 'initial' : 'center',
+                px: effectiveOpen ? 1.5 : 0,
+                py: 0.25,
+                borderRadius: 1.5,
+                fontSize: '0.8125rem',
+                color: 'text.secondary',
+                '&:hover': { backgroundColor: 'action.hover' },
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
               </ListItemIcon>
-            </Box>
-            {effectiveOpen && (
-              <ListItemText
-                primary={mode === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
-                sx={{
-                  '& .MuiListItemText-primary': {
-                    fontSize: '0.875rem',
-                    color: 'text.secondary',
-                  }
-                }}
-              />
-            )}
-          </ListItemButton>
-        </ListItem>
-
-        {effectiveOpen && user?.email && (
-          <>
-            <Typography
-              variant="caption"
+              {effectiveOpen && (
+                <ListItemText
+                  primary={mode === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                  sx={{ '& .MuiListItemText-primary': { fontSize: '0.8125rem', color: 'text.secondary' } }}
+                />
+              )}
+            </ListItemButton>
+          </ListItem>
+          {/* Ajuda */}
+          <ListItem disablePadding sx={{ mb: 0.25 }}>
+            <ListItemButton
+              disabled
               sx={{
-                px: 2,
-                py: 0.5,
-                display: 'block',
-                color: 'text.secondary',
-                fontSize: '0.75rem',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {user.email}
-            </Typography>
-            <Button
-              size="small"
-              startIcon={permissionsLoading ? <CircularProgress size={14} color="inherit" /> : <RefreshIcon />}
-              onClick={() => refetchRole()}
-              disabled={permissionsLoading}
-              sx={{
-                mt: 0.5,
-                px: 2,
-                fontSize: '0.7rem',
-                color: 'text.secondary',
-                textTransform: 'none',
-                minHeight: 0,
+                minHeight: 36,
+                justifyContent: effectiveOpen ? 'initial' : 'center',
+                px: effectiveOpen ? 1.5 : 0,
                 py: 0.25,
-                '&:hover': { backgroundColor: 'action.hover', color: 'primary.main' },
-              }}
-            >
-              Atualizar permissões
-            </Button>
-          </>
-        )}
-
-        <Divider sx={{ my: 1, mx: effectiveOpen ? 2 : 1 }} />
-
-        {/* Ajuda */}
-        <ListItem disablePadding sx={{ display: 'block', mb: 1 }}>
-          <ListItemButton
-            sx={{
-              minHeight: 40,
-              justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
-              borderRadius: 2,
-              fontSize: '0.875rem',
-              color: 'text.secondary',
-              '&.Mui-disabled': {
+                borderRadius: 1.5,
+                fontSize: '0.8125rem',
                 color: 'text.secondary',
-                opacity: 1,
-              },
-            }}
-            disabled
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
-                boxSizing: 'content-box',
+                '&.Mui-disabled': { color: 'text.secondary', opacity: 1 },
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
+                  mr: effectiveOpen ? 1.5 : 0,
                   justifyContent: 'center',
                   color: 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
-                  '.MuiListItemButton-root.Mui-disabled &': {
-                    color: 'text.secondary',
-                    opacity: 1,
-                  },
+                  '& svg': { fontSize: '1.125rem' },
                 }}
               >
                 <HelpIcon />
               </ListItemIcon>
-            </Box>
-            {effectiveOpen && (
-              <ListItemText 
-                primary="Ajuda" 
-                sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
-                    color: 'text.secondary',
-                  } 
-                }} 
-              />
-            )}
-          </ListItemButton>
-        </ListItem>
+              {effectiveOpen && (
+                <ListItemText
+                  primary="Ajuda"
+                  sx={{ '& .MuiListItemText-primary': { fontSize: '0.8125rem', color: 'text.secondary' } }}
+                />
+              )}
+            </ListItemButton>
+          </ListItem>
+        </List>
 
-        {/* Sair */}
-        <ListItem disablePadding sx={{ display: 'block' }}>
-          <ListItemButton
-            onClick={async () => {
-              await signOut()
-              navigate('/login', { replace: true })
-            }}
-            sx={{
-              minHeight: 40,
-              justifyContent: effectiveOpen ? 'initial' : 'center',
-              px: effectiveOpen ? 2 : 0,
-              py: effectiveOpen ? 0 : 0.5,
-              borderRadius: 2,
-              fontSize: '0.875rem',
-              color: 'text.secondary',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
+        {user?.email && (
+          <>
+            <Divider sx={{ my: 0.75, mx: 0 }} />
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: effectiveOpen ? 'flex-start' : 'center',
-                width: effectiveOpen ? 'auto' : 40,
-                height: 40,
-                borderRadius: 2,
-                boxSizing: 'content-box',
+                justifyContent: 'space-between',
+                gap: 0.5,
+                px: 0.5,
+                py: 0.5,
+                minHeight: 40,
               }}
             >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: effectiveOpen ? 2 : 0,
-                  justifyContent: 'center',
-                  color: 'text.secondary',
-                  '& svg': {
-                    fontSize: '1.25rem',
-                  },
-                  '.MuiListItemButton-root.Mui-disabled &': {
+            <Box
+              component="button"
+              onClick={() => handleNav('/perfil')}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: effectiveOpen ? 1 : 0,
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                minWidth: 0,
+                flex: 1,
+                overflow: 'hidden',
+                justifyContent: effectiveOpen ? 'flex-start' : 'center',
+                '&:hover': { opacity: 0.85 },
+              }}
+            >
+              {!effectiveOpen && (
+                <PersonIcon sx={{ color: 'text.secondary', fontSize: '1.25rem' }} />
+              )}
+              {effectiveOpen && (
+                <Typography
+                  variant="caption"
+                  sx={{
                     color: 'text.secondary',
-                    opacity: 1,
-                  },
-                }}
-              >
-                <ExitToAppIcon />
-              </ListItemIcon>
+                    fontSize: '0.75rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {user.email}
+                </Typography>
+              )}
             </Box>
-            {effectiveOpen && (
-              <ListItemText 
-                primary="Sair" 
-                sx={{ 
-                  '& .MuiListItemText-primary': { 
-                    fontSize: '0.875rem',
-                    color: 'text.secondary',
-                  } 
-                }} 
-              />
-            )}
-          </ListItemButton>
-        </ListItem>
-      </Box>
+            <IconButton
+              size="small"
+              onClick={async () => {
+                await signOut()
+                navigate('/login', { replace: true })
+              }}
+              aria-label="Sair"
+              sx={{
+                color: 'text.secondary',
+                flexShrink: 0,
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              <ExitToAppIcon sx={{ fontSize: '1.25rem' }} />
+            </IconButton>
+          </Box>
+        </>
+      )}
+    </Box>
     </Box>
   )
 
@@ -1018,7 +949,7 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
               boxSizing: 'border-box',
               transition: theme.transitions.create('width', {
                 easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
+                duration: 150,
               }),
               overflowX: 'hidden',
             },

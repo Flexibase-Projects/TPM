@@ -23,6 +23,11 @@ export const ProtectedRoute = ({
   const { loading: permLoading, canAccessDashboard, canManageOM } = usePermissions()
   const location = useLocation()
 
+  // #region agent log
+  const branch = authLoading ? 'authLoading' : !user ? 'redirectNoUser' : requireDashboardOrAdmin && !canAccessDashboard ? 'redirectNoDashboard' : requireEquipeOrAbove && !canManageOM ? 'redirectNoManage' : permLoading && (requireDashboardOrAdmin || requireEquipeOrAbove) ? 'permLoading' : 'children'
+  fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'ProtectedRoute.tsx:render', message: 'ProtectedRoute branch', data: { pathname: location.pathname, branch, permLoading, requireDashboardOrAdmin, requireEquipeOrAbove }, timestamp: Date.now(), hypothesisId: 'H3' }) }).catch(() => {})
+  // #endregion
+
   if (authLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>

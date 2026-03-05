@@ -46,7 +46,6 @@ export const MaquinarioDetailsDialog = ({
   const [loadingParadas, setLoadingParadas] = useState(false)
   const [itensMaterial, setItensMaterial] = useState<MaterialMaquinario[]>([])
   const [loadingItensMaterial, setLoadingItensMaterial] = useState(false)
-
   useEffect(() => {
     if (open && maquinario) {
       loadParadas()
@@ -123,7 +122,7 @@ export const MaquinarioDetailsDialog = ({
           pb: 1,
         }}
       >
-        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+        <Typography component="span" sx={{ fontSize: '1rem', fontWeight: 600 }}>
           Detalhes do Maquinário
         </Typography>
         <Button
@@ -254,6 +253,28 @@ export const MaquinarioDetailsDialog = ({
             </Typography>
             <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
               {formatarHorasParaHHMM(maquinario.tempo_disponivel_horas || 10)}
+            </Typography>
+          </Box>
+
+          <Box sx={{ flex: '1 1 auto', minWidth: 120 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.6875rem',
+                fontWeight: 600,
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                display: 'block',
+                mb: 0.5,
+              }}
+            >
+              Valor do maquinário
+            </Typography>
+            <Typography variant="body2" sx={{ fontSize: '0.8125rem', fontWeight: 500, color: 'primary.main' }}>
+              {maquinario.valor_maquinario != null && maquinario.valor_maquinario > 0
+                ? formatarMoeda(Number(maquinario.valor_maquinario))
+                : 'Não informado'}
             </Typography>
           </Box>
         </Box>

@@ -43,6 +43,8 @@ export const GearLogo = ({
         sx={{
           display: 'block',
           objectFit: 'contain',
+          objectPosition: 'center',
+          margin: 0,
           ...(blueFilter && {
             filter: blueImageFilter,
           }),
