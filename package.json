@@ -1,7 +1,7 @@
 {
   "name": "tpm",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,8 +19,10 @@
     "dayjs": "^1.11.10",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.3",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-qr-rounded": "^1.0.0",
     "react-router-dom": "^6.20.0",
     "recharts": "^3.6.0"
   },

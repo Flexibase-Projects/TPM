@@ -16,6 +16,8 @@ import { MinhasOMs } from './pages/MinhasOMs'
 import { BuscarOM } from './pages/BuscarOM'
 import { Permissoes } from './pages/admin/Permissoes'
 import { Perfil } from './pages/Perfil'
+import { InicioTPM } from './pages/InicioTPM'
+import { MaquinarioQRPage } from './pages/MaquinarioQRPage'
 
 function LoginRoute() {
   const { user, loading } = useAuth()
@@ -50,6 +52,9 @@ function AppRoutes() {
   }
 
   if (!user) {
+    if (pathname === '/') {
+      return <InicioTPM />
+    }
     if (pathname === '/ocorrencias') {
       return (
         <LayoutPublic>
@@ -64,7 +69,10 @@ function AppRoutes() {
         </LayoutPublic>
       )
     }
-    return <Navigate to="/ocorrencias" replace />
+    if (pathname.startsWith('/maquinario/')) {
+      return <MaquinarioQRPage />
+    }
+    return <Navigate to="/" replace />
   }
 
   return (
@@ -80,6 +88,7 @@ function AppRoutes() {
           <Route path="/paradas" element={<ProtectedRoute requireEquipeOrAbove><Paradas /></ProtectedRoute>} />
           <Route path="/admin/permissoes" element={<ProtectedRoute requireDashboardOrAdmin><Permissoes /></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+          <Route path="/maquinario/:id" element={<ProtectedRoute><MaquinarioQRPage /></ProtectedRoute>} />
         </Routes>
       </Layout>
     </PermissionsProvider>

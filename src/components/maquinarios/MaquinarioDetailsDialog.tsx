@@ -28,6 +28,7 @@ import type { Maquinario } from '../../types/maquinario'
 import type { Parada } from '../../types/parada'
 import type { MaterialMaquinario } from '../../types/material'
 import { formatarHorasParaHHMM } from '../../utils/constants'
+import { MaquinarioQRManualSection } from './MaquinarioQRManualSection'
 
 interface MaquinarioDetailsDialogProps {
   open: boolean
@@ -141,6 +142,9 @@ export const MaquinarioDetailsDialog = ({
       </DialogTitle>
 
       <DialogContent dividers sx={{ pt: 2 }}>
+        <Box sx={{ mb: 3 }}>
+          <MaquinarioQRManualSection maquinarioId={maquinario.id} />
+        </Box>
         {/* Informações Principais - Condensadas */}
         <Box
           sx={{
