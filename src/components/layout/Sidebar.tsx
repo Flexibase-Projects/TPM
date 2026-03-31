@@ -62,29 +62,16 @@ export const Sidebar = ({ open, onToggle, mobileDrawerOpen = false, onMobileDraw
 
   const effectiveOpen = isMobile && mobileDrawerOpen ? true : open
   const prevPathnameRef = useRef(location.pathname)
-  const mountIdRef = useRef(Math.random().toString(36).slice(2, 9))
 
   const handleNav = (path: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'Sidebar.tsx:navClick', message: 'Sidebar nav click', data: { to: path, from: location.pathname }, timestamp: Date.now(), hypothesisId: 'H1' }) }).catch(() => {})
-    // #endregion
     navigate(path)
   }
-
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'Sidebar.tsx:mount', message: 'Sidebar mounted', data: { mountId: mountIdRef.current }, timestamp: Date.now(), hypothesisId: 'H2' }) }).catch(() => {})
-  }, [])
-  // #endregion
 
   useEffect(() => {
     if (!isMobile) return
     const prev = prevPathnameRef.current
     prevPathnameRef.current = location.pathname
     if (prev !== location.pathname) {
-      // #region agent log
-      fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'Sidebar.tsx:pathnameChange', message: 'Mobile drawer close on pathname change', data: { from: prev, to: location.pathname }, timestamp: Date.now(), hypothesisId: 'H5' }) }).catch(() => {})
-      // #endregion
       onMobileDrawerClose?.()
     }
   }, [location.pathname, isMobile, onMobileDrawerClose])

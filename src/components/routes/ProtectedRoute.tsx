@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePermissions } from '../../contexts/PermissionsContext'
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
+  children: ReactNode
   /** Se true, só Gerente e Admin podem acessar (ex.: Dashboard, Admin). */
   requireDashboardOrAdmin?: boolean
   /** Se true, só Equipe, Gerente e Admin (ex.: Visualizar OM, Maquinários, Paradas). */
@@ -23,11 +24,6 @@ export const ProtectedRoute = ({
   const { loading: permLoading, canAccessDashboard, canManageOM } = usePermissions()
   const location = useLocation()
 
-  // #region agent log
-  const branch = authLoading ? 'authLoading' : !user ? 'redirectNoUser' : requireDashboardOrAdmin && !canAccessDashboard ? 'redirectNoDashboard' : requireEquipeOrAbove && !canManageOM ? 'redirectNoManage' : permLoading && (requireDashboardOrAdmin || requireEquipeOrAbove) ? 'permLoading' : 'children'
-  fetch('http://127.0.0.1:7525/ingest/b5c85d67-913e-453c-9948-d50deb840a1b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '856500' }, body: JSON.stringify({ sessionId: '856500', location: 'ProtectedRoute.tsx:render', message: 'ProtectedRoute branch', data: { pathname: location.pathname, branch, permLoading, requireDashboardOrAdmin, requireEquipeOrAbove }, timestamp: Date.now(), hypothesisId: 'H3' }) }).catch(() => {})
-  // #endregion
-
   if (authLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
@@ -37,15 +33,7 @@ export const ProtectedRoute = ({
   }
 
   if (!user) {
-    return <Navigate to="/ocorrencias" state={{ from: location }} replace />
-  }
-
-  if (requireDashboardOrAdmin && !canAccessDashboard) {
-    return <Navigate to="/minhas-oms" replace />
-  }
-
-  if (requireEquipeOrAbove && !canManageOM) {
-    return <Navigate to="/minhas-oms" replace />
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
   if (permLoading && (requireDashboardOrAdmin || requireEquipeOrAbove)) {
@@ -54,6 +42,14 @@ export const ProtectedRoute = ({
         <CircularProgress />
       </Box>
     )
+  }
+
+  if (requireDashboardOrAdmin && !canAccessDashboard) {
+    return <Navigate to="/minhas-oms" replace />
+  }
+
+  if (requireEquipeOrAbove && !canManageOM) {
+    return <Navigate to="/minhas-oms" replace />
   }
 
   return <>{children}</>

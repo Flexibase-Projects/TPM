@@ -16,11 +16,12 @@ import { MinhasOMs } from './pages/MinhasOMs'
 import { BuscarOM } from './pages/BuscarOM'
 import { Permissoes } from './pages/admin/Permissoes'
 import { Perfil } from './pages/Perfil'
-import { InicioTPM } from './pages/InicioTPM'
 import { MaquinarioQRPage } from './pages/MaquinarioQRPage'
+import { getPostLoginRedirectPath } from './utils/loginPreferences'
 
 function LoginRoute() {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -31,7 +32,7 @@ function LoginRoute() {
   }
 
   if (user) {
-    return <Navigate to="/" replace />
+    return <Navigate to={getPostLoginRedirectPath(location.state)} replace />
   }
 
   return <Login />
@@ -42,6 +43,14 @@ function AppRoutes() {
   const { user, loading } = useAuth()
   const location = useLocation()
   const pathname = location.pathname
+  const protectedPaths = [
+    '/minhas-oms',
+    '/visualizar-om',
+    '/maquinarios',
+    '/paradas',
+    '/admin/permissoes',
+    '/perfil',
+  ]
 
   if (loading) {
     return (
@@ -53,7 +62,7 @@ function AppRoutes() {
 
   if (!user) {
     if (pathname === '/') {
-      return <InicioTPM />
+      return <Navigate to="/login" replace />
     }
     if (pathname === '/ocorrencias') {
       return (
@@ -72,7 +81,10 @@ function AppRoutes() {
     if (pathname.startsWith('/maquinario/')) {
       return <MaquinarioQRPage />
     }
-    return <Navigate to="/" replace />
+    if (protectedPaths.some((protectedPath) => pathname === protectedPath || pathname.startsWith(`${protectedPath}/`))) {
+      return <Navigate to="/login" state={{ from: location }} replace />
+    }
+    return <Navigate to="/login" replace />
   }
 
   return (
