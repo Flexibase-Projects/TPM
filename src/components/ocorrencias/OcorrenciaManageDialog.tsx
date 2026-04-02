@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from 'react'
 import {
   Dialog,
@@ -25,6 +26,7 @@ import {
   TableRow,
   IconButton,
 } from '@mui/material'
+import type { ChipProps } from '@mui/material/Chip'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import WarningIcon from '@mui/icons-material/Warning'
@@ -247,7 +249,7 @@ export const OcorrenciaManageDialog = ({
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
       case 'novo': return 'info'
       case 'na fila': return 'warning'
@@ -448,7 +450,7 @@ export const OcorrenciaManageDialog = ({
                   <Chip
                     label={ocorrencia.status}
                     size="small"
-                    color={getStatusColor(ocorrencia.status) as any}
+                    color={getStatusColor(ocorrencia.status)}
                     sx={{ textTransform: 'capitalize', fontWeight: 500, height: 24, fontSize: '0.6875rem' }}
                   />
                 </Box>

@@ -5,6 +5,11 @@ const HORARIO_INICIO_TRABALHO = '08:00:00'
 const HORARIO_FIM_TRABALHO = '18:00:00'
 const HORAS_DISPONIVEIS_PADRAO = 10
 
+const normalizeSingleRelation = <T,>(value: T | T[] | null | undefined): T | undefined => {
+  if (Array.isArray(value)) return value[0]
+  return value ?? undefined
+}
+
 /**
  * Calcula horas de parada considerando horário de trabalho (8h-18h)
  * Arredonda para minutos (evita decimais muito longos)
@@ -73,12 +78,14 @@ export const getOrCreateTempoDisponivel = async (
   data: string
 ): Promise<TempoDisponivelDiario> => {
   // Tentar buscar registro existente
-  const { data: existing, error: _fetchError } = await supabase
+  const { data: existing, error } = await supabase
     .from('TPM_tempo_disponivel_diario')
     .select('*')
     .eq('maquinario_id', maquinarioId)
     .eq('data', data)
     .single()
+
+  if (error && error.code !== 'PGRST116') throw error
 
   if (existing) {
     return existing as TempoDisponivelDiario
@@ -405,16 +412,16 @@ export const getAllParadas = async (): Promise<Parada[]> => {
 
   // Transformar os dados para o formato esperado. maquinario/area podem ser null
   // se RLS restringir leitura nas tabelas relacionadas no join.
-  return (data || []).map((item: any) => {
-    const maquinario = Array.isArray(item.maquinario) ? item.maquinario[0] : item.maquinario
+  return (data || []).map((item) => {
+    const maquinario = normalizeSingleRelation(item.maquinario)
     return {
       ...item,
-      motivo_parada: Array.isArray(item.motivo_parada) ? item.motivo_parada[0] : item.motivo_parada,
-      ocorrencia: Array.isArray(item.ocorrencia) ? item.ocorrencia[0] : item.ocorrencia,
+      motivo_parada: normalizeSingleRelation(item.motivo_parada),
+      ocorrencia: normalizeSingleRelation(item.ocorrencia),
       maquinario: maquinario
         ? {
             ...maquinario,
-            area: Array.isArray(maquinario.area) ? maquinario.area[0] : maquinario.area,
+            area: normalizeSingleRelation(maquinario.area),
           }
         : undefined,
     }

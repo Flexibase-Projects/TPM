@@ -79,10 +79,9 @@ export const Paradas = () => {
         : raw
       setError(message)
     } finally {
-      if (myId !== loadIdRef.current) {
-        return
+      if (myId === loadIdRef.current) {
+        setLoading(false)
       }
-      setLoading(false)
     }
   }
 

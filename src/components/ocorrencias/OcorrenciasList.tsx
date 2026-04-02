@@ -14,6 +14,7 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material'
+import type { ChipProps } from '@mui/material/Chip'
 import SettingsIcon from '@mui/icons-material/Settings'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -89,7 +90,7 @@ export const OcorrenciasList = ({
     return hoveredRowId === ocorrenciaId || clickedRowId === ocorrenciaId || isMenuOpenForThisItem
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
       case 'novo':
         return 'info'
@@ -205,7 +206,7 @@ export const OcorrenciasList = ({
                       <Chip
                         label={ocorrencia.status}
                         size="small"
-                        color={getStatusColor(ocorrencia.status) as any}
+                        color={getStatusColor(ocorrencia.status)}
                         sx={{ textTransform: 'capitalize', fontWeight: 500 }}
                       />
                     </TableCell>

@@ -10,6 +10,7 @@ import {
   Grid,
   Paper,
 } from '@mui/material'
+import type { ChipProps } from '@mui/material/Chip'
 import CloseIcon from '@mui/icons-material/Close'
 import type { OcorrenciaManutencao } from '../../types/ocorrencia'
 import dayjs from 'dayjs'
@@ -40,7 +41,7 @@ export const OcorrenciaDetailsDialog = ({
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
       case 'novo':
         return 'info'
@@ -175,7 +176,7 @@ export const OcorrenciaDetailsDialog = ({
                     <Chip
                       label={ocorrencia.status}
                       size="small"
-                      color={getStatusColor(ocorrencia.status) as any}
+                      color={getStatusColor(ocorrencia.status)}
                       sx={{ textTransform: 'capitalize', fontWeight: 500 }}
                     />
                   </Box>

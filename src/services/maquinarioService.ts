@@ -2,6 +2,11 @@ import { supabase } from './supabase'
 import type { Maquinario, Area, MaquinarioFormData, StatusMaquinario } from '../types/maquinario'
 import type { OcorrenciaManutencao } from '../types/ocorrencia'
 
+const normalizeSingleRelation = <T,>(value: T | T[] | null | undefined): T | undefined => {
+  if (Array.isArray(value)) return value[0]
+  return value ?? undefined
+}
+
 // Áreas
 export const getAreas = async (): Promise<Area[]> => {
   const { data, error } = await supabase
@@ -39,9 +44,9 @@ export const getMaquinarios = async (): Promise<Maquinario[]> => {
   if (error) throw error
 
   // Transformar os dados para o formato esperado (preservar imagem_url para exibição na lista)
-  const mapped = (data || []).map((item: any) => ({
+  const mapped = (data || []).map((item) => ({
     ...item,
-    area: Array.isArray(item.area) ? item.area[0] : item.area,
+    area: normalizeSingleRelation(item.area),
     imagem_url: item.imagem_url ?? null,
   })) as Maquinario[]
 
@@ -65,7 +70,7 @@ export const getMaquinarioById = async (id: string): Promise<Maquinario> => {
   // Transformar os dados para o formato esperado
   const result = {
     ...data,
-    area: Array.isArray(data.area) ? data.area[0] : data.area,
+    area: normalizeSingleRelation(data.area),
   } as Maquinario
   
   return result
@@ -297,8 +302,12 @@ export const updateStatusMaquinario = async (
   status: StatusMaquinario,
   motivoInativacao?: string | null
 ): Promise<Maquinario> => {
-  const updateData: any = {
+  const updateData: {
+    status_maquinario: StatusMaquinario
+    motivo_inativacao: string | null
+  } = {
     status_maquinario: status,
+    motivo_inativacao: null,
   }
 
   // Se está definindo como Inativa, motivo é obrigatório

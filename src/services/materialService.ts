@@ -1,6 +1,11 @@
 import { supabase } from './supabase'
 import type { ItemMaterialComOcorrencia, ItemMaterialOcorrencia, ItemMaterialOcorrenciaFormItem, ItemMaterialRelatorio, MaterialMaquinario, MaterialMaquinarioFormItem } from '../types/material'
 
+const normalizeSingleRelation = <T,>(value: T | T[] | null | undefined): T | undefined => {
+  if (Array.isArray(value)) return value[0]
+  return value ?? undefined
+}
+
 /**
  * Lista todos os itens de material com contexto de ocorrência/maquinário/área para relatórios de custo.
  * Usado no Dashboard (custos por máquina, setor, top peças).
@@ -29,12 +34,11 @@ export const getAllItensMaterialParaRelatorio = async (): Promise<ItemMaterialRe
 
   if (error) throw error
 
-  const rows = (itens || []) as any[]
+  const rows = itens || []
   return rows.map((row) => {
-    const ocorrencia = Array.isArray(row.ocorrencia) ? row.ocorrencia[0] : row.ocorrencia
-    const maquinario = ocorrencia?.maquinario ?? ocorrencia?.TPM_maquinarios
-    const areaRaw = maquinario?.area ?? maquinario?.TPM_areas
-    const area = Array.isArray(areaRaw) ? areaRaw[0] : areaRaw
+    const ocorrencia = normalizeSingleRelation(row.ocorrencia)
+    const maquinario = normalizeSingleRelation(ocorrencia?.maquinario)
+    const area = normalizeSingleRelation(maquinario?.area)
     const valorUnitario = Number(row.valor_unitario) ?? 0
     const quantidade = Number(row.quantidade) ?? 0
     return {
@@ -130,12 +134,11 @@ export const getItensMaterialByMaquinario = async (
 
   if (errItens) throw errItens
 
-  return (itens || []).map((row: any) => {
-    const ocorrencia = Array.isArray(row.ocorrencia) ? row.ocorrencia[0] : row.ocorrencia
-    const { ocorrencia: _, ...item } = row
+  return (itens || []).map((row) => {
+    const { ocorrencia, ...item } = row
     return {
       ...item,
-      data_ocorrencia: ocorrencia?.data_ocorrencia,
+      data_ocorrencia: normalizeSingleRelation(ocorrencia)?.data_ocorrencia,
     } as ItemMaterialComOcorrencia
   })
 }

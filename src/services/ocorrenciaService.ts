@@ -9,6 +9,11 @@ import type {
 } from '../types/ocorrencia'
 import { updateStatusMaquinario } from './maquinarioService'
 
+const normalizeSingleRelation = <T,>(value: T | T[] | null | undefined): T | undefined => {
+  if (Array.isArray(value)) return value[0]
+  return value ?? undefined
+}
+
 export const getOcorrencias = async (): Promise<OcorrenciaManutencao[]> => {
   const { data, error } = await supabase
     .from('TPM_ocorrencias_manutencao')
@@ -21,9 +26,9 @@ export const getOcorrencias = async (): Promise<OcorrenciaManutencao[]> => {
   if (error) throw error
   
   // Transformar os dados para o formato esperado
-  return (data || []).map((item: any) => ({
+  return (data || []).map((item) => ({
     ...item,
-    maquinario: Array.isArray(item.maquinario) ? item.maquinario[0] : item.maquinario,
+    maquinario: normalizeSingleRelation(item.maquinario),
   })) as OcorrenciaManutencao[]
 }
 
@@ -42,7 +47,7 @@ export const getOcorrenciaById = async (id: string): Promise<OcorrenciaManutenca
   // Transformar os dados para o formato esperado
   const result = {
     ...data,
-    maquinario: Array.isArray(data.maquinario) ? data.maquinario[0] : data.maquinario,
+    maquinario: normalizeSingleRelation(data.maquinario),
   } as OcorrenciaManutencao
   
   return result
@@ -60,14 +65,14 @@ export const getOcorrenciasByMaquinario = async (maquinarioId: string): Promise<
 
   if (error) throw error
   
-  return (data || []).map((item: any) => ({
+  return (data || []).map((item) => ({
     ...item,
-    maquinario: Array.isArray(item.maquinario) ? item.maquinario[0] : item.maquinario,
+    maquinario: normalizeSingleRelation(item.maquinario),
   })) as OcorrenciaManutencao[]
 }
 
 export const createOcorrencia = async (formData: OcorrenciaFormData): Promise<OcorrenciaManutencao> => {
-  const insertData: any = {
+  const insertData = {
     maquinario_id: formData.maquinario_id,
     tipo_om: formData.tipo_om || 'Corretiva',
     categoria: formData.categoria,
@@ -115,7 +120,17 @@ export const updateOcorrencia = async (
   // Buscar ocorrência atual para verificar se está sendo fechada
   const ocorrenciaAtual = await getOcorrenciaById(id)
   
-  const updateData: any = {
+  const updateData: {
+    maquinario_id: string
+    tipo_om: OcorrenciaFormData['tipo_om'] | 'Corretiva'
+    categoria: OcorrenciaFormData['categoria']
+    descricao: string
+    data_ocorrencia: string
+    responsavel: string | null
+    status: StatusOcorrencia
+    observacoes: string | null
+    data_fechamento?: string | null
+  } = {
     maquinario_id: formData.maquinario_id,
     tipo_om: formData.tipo_om || ocorrenciaAtual.tipo_om || 'Corretiva',
     categoria: formData.categoria,
@@ -268,7 +283,11 @@ export const transicionarStatus = async (
     throw new Error('Comentário é obrigatório para enviar para fila. Informe o número da ordem de compra ou tipo de serviço solicitado externamente.')
   }
 
-  const updateData: any = {
+  const updateData: {
+    status: StatusOcorrencia
+    responsavel?: string
+    data_fechamento?: string | null
+  } = {
     status: transicao.novoStatus,
   }
 

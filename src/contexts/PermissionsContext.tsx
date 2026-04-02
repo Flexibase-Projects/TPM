@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 import { getMyRole } from '../services/permissionService'
@@ -104,7 +105,7 @@ export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
       cancelled = true
       clearTimeout(t)
     }
-  }, [user?.id, session?.access_token])
+  }, [user, user?.id, session?.access_token])
 
   const value = useMemo<PermissionsContextType>(() => {
     const isAdmin = role === 'administrador'
