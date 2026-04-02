@@ -1,34 +1,46 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { CssBaseline, Box, CircularProgress } from '@mui/material'
+import { CssBaseline } from '@mui/material'
 import { ThemeContextProvider } from './contexts/ThemeContext'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { PermissionsProvider } from './contexts/PermissionsContext'
 import { Layout } from './components/layout/Layout'
 import { LayoutPublic } from './components/layout/LayoutPublic'
 import { ProtectedRoute } from './components/routes/ProtectedRoute'
-import { Login } from './pages/Login'
-import { Dashboard } from './pages/Dashboard'
-import { Maquinarios } from './pages/Maquinarios'
-import { OcorrenciasManutencao } from './pages/OcorrenciasManutencao'
-import { VisualizarOM } from './pages/VisualizarOM'
-import { Paradas } from './pages/Paradas'
-import { MinhasOMs } from './pages/MinhasOMs'
-import { BuscarOM } from './pages/BuscarOM'
-import { Permissoes } from './pages/admin/Permissoes'
-import { Perfil } from './pages/Perfil'
-import { MaquinarioQRPage } from './pages/MaquinarioQRPage'
+import { AppLoadingFallback } from './components/common/AppLoadingFallback'
 import { getPostLoginRedirectPath } from './utils/loginPreferences'
+import {
+  isProtectedPath,
+  isPublicMaquinarioPath,
+  isPublicStandalonePath,
+} from './utils/routeAccess'
+
+const Login = lazy(async () => ({ default: (await import('./pages/Login')).Login }))
+const Dashboard = lazy(async () => ({ default: (await import('./pages/Dashboard')).Dashboard }))
+const Maquinarios = lazy(async () => ({ default: (await import('./pages/Maquinarios')).Maquinarios }))
+const OcorrenciasManutencao = lazy(
+  async () => ({ default: (await import('./pages/OcorrenciasManutencao')).OcorrenciasManutencao })
+)
+const VisualizarOM = lazy(
+  async () => ({ default: (await import('./pages/VisualizarOM')).VisualizarOM })
+)
+const Paradas = lazy(async () => ({ default: (await import('./pages/Paradas')).Paradas }))
+const MinhasOMs = lazy(async () => ({ default: (await import('./pages/MinhasOMs')).MinhasOMs }))
+const BuscarOM = lazy(async () => ({ default: (await import('./pages/BuscarOM')).BuscarOM }))
+const Permissoes = lazy(
+  async () => ({ default: (await import('./pages/admin/Permissoes')).Permissoes })
+)
+const Perfil = lazy(async () => ({ default: (await import('./pages/Perfil')).Perfil }))
+const MaquinarioQRPage = lazy(
+  async () => ({ default: (await import('./pages/MaquinarioQRPage')).MaquinarioQRPage })
+)
 
 function LoginRoute() {
   const { user, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.default' }}>
-        <CircularProgress />
-      </Box>
-    )
+    return <AppLoadingFallback />
   }
 
   if (user) {
@@ -43,45 +55,33 @@ function AppRoutes() {
   const { user, loading } = useAuth()
   const location = useLocation()
   const pathname = location.pathname
-  const protectedPaths = [
-    '/minhas-oms',
-    '/visualizar-om',
-    '/maquinarios',
-    '/paradas',
-    '/admin/permissoes',
-    '/perfil',
-  ]
 
   if (loading) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.default' }}>
-        <CircularProgress />
-      </Box>
-    )
+    return <AppLoadingFallback />
   }
 
   if (!user) {
     if (pathname === '/') {
       return <Navigate to="/login" replace />
     }
-    if (pathname === '/ocorrencias') {
+    if (pathname === '/ocorrencias' && isPublicStandalonePath(pathname)) {
       return (
         <LayoutPublic>
           <OcorrenciasManutencao />
         </LayoutPublic>
       )
     }
-    if (pathname === '/buscar-om') {
+    if (pathname === '/buscar-om' && isPublicStandalonePath(pathname)) {
       return (
         <LayoutPublic>
           <BuscarOM />
         </LayoutPublic>
       )
     }
-    if (pathname.startsWith('/maquinario/')) {
+    if (isPublicMaquinarioPath(pathname)) {
       return <MaquinarioQRPage />
     }
-    if (protectedPaths.some((protectedPath) => pathname === protectedPath || pathname.startsWith(`${protectedPath}/`))) {
+    if (isProtectedPath(pathname)) {
       return <Navigate to="/login" state={{ from: location }} replace />
     }
     return <Navigate to="/login" replace />
@@ -93,7 +93,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<ProtectedRoute requireDashboardOrAdmin><Dashboard /></ProtectedRoute>} />
           <Route path="/minhas-oms" element={<ProtectedRoute><MinhasOMs /></ProtectedRoute>} />
-          <Route path="/ocorrencias" element={<ProtectedRoute requireEquipeOrAbove><OcorrenciasManutencao /></ProtectedRoute>} />
+          <Route path="/ocorrencias" element={<ProtectedRoute><OcorrenciasManutencao /></ProtectedRoute>} />
           <Route path="/buscar-om" element={<ProtectedRoute requireEquipeOrAbove><BuscarOM /></ProtectedRoute>} />
           <Route path="/visualizar-om" element={<ProtectedRoute requireEquipeOrAbove><VisualizarOM /></ProtectedRoute>} />
           <Route path="/maquinarios" element={<ProtectedRoute requireEquipeOrAbove><Maquinarios /></ProtectedRoute>} />
@@ -113,10 +113,12 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginRoute />} />
-            <Route path="/*" element={<AppRoutes />} />
-          </Routes>
+          <Suspense fallback={<AppLoadingFallback />}>
+            <Routes>
+              <Route path="/login" element={<LoginRoute />} />
+              <Route path="/*" element={<AppRoutes />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </ThemeContextProvider>

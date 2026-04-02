@@ -1,5 +1,6 @@
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded'
 import {
   Alert,
   Box,
@@ -13,6 +14,8 @@ import {
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { ChangeEvent, FormEvent } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
+import { publicEntryPoints } from '../../utils/publicNavigation'
 
 interface LoginFormPanelProps {
   email: string
@@ -41,6 +44,7 @@ export const LoginFormPanel = ({
 }: LoginFormPanelProps) => {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
+  const openOmEntryPoint = publicEntryPoints.find((entryPoint) => entryPoint.to === '/ocorrencias')
 
   return (
     <Box
@@ -74,6 +78,7 @@ export const LoginFormPanel = ({
               onChange={onEmailChange}
               required
               autoComplete="username"
+              spellCheck={false}
               placeholder="voce@flexibase.com.br"
               autoFocus
               sx={{
@@ -147,7 +152,7 @@ export const LoginFormPanel = ({
               variant="contained"
               size="large"
               fullWidth
-              disabled={submitting || !email.trim() || !password}
+              disabled={submitting}
               startIcon={!submitting ? <LockOutlinedIcon /> : undefined}
               sx={{
                 minHeight: 44,
@@ -167,6 +172,32 @@ export const LoginFormPanel = ({
             >
               {submitting ? 'Acessando...' : 'Acessar sistema'}
             </Button>
+
+            {openOmEntryPoint ? (
+              <Button
+                component={RouterLink}
+                to={openOmEntryPoint.to}
+                variant="outlined"
+                size="large"
+                fullWidth
+                endIcon={<OpenInNewRoundedIcon fontSize="small" />}
+                sx={{
+                  minHeight: 42,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  borderColor: isDark ? alpha('#93c5fd', 0.28) : alpha('#3467e8', 0.28),
+                  color: isDark ? '#dbe7ff' : '#1d4ed8',
+                  backgroundColor: isDark ? alpha('#0f172a', 0.22) : '#ffffff',
+                  touchAction: 'manipulation',
+                  '&:hover': {
+                    borderColor: isDark ? alpha('#93c5fd', 0.46) : alpha('#3467e8', 0.44),
+                    backgroundColor: isDark ? alpha('#13203a', 0.72) : alpha('#eff6ff', 0.92),
+                  },
+                }}
+              >
+                Abrir Ordem de Manutencao
+              </Button>
+            ) : null}
 
             <FormControlLabel
               sx={{
